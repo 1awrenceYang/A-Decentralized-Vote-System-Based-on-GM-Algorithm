@@ -10,6 +10,7 @@ extern "C"
 #include"include/spdlog/spdlog.h"
 #include "include/spdlog/sinks/basic_file_sink.h"
 #include "include/spdlog/sinks/rotating_file_sink.h"
+#include<time.h>
 using namespace spdlog;
 /*****************************************Parameters decleration*****************************************/
 #define VotePass 1
@@ -20,6 +21,10 @@ using namespace spdlog;
 #define RightJustify 1
 #define LeftJustify 0
 #define PointInfinite 2
+#define HexIOBASAE 16
+#define PointNotOnCurve 3
+#define DecryptionFail 4
+#define HashValueError 5
 auto RuntimeLogger = spdlog::basic_logger_mt("basic_logger", "logs/RunTimeLog.txt");
 typedef uint8_t u8;
 /*****************************************Parameters decleration*****************************************/
@@ -30,6 +35,21 @@ void PrintErrorMessage(int Error)
     case PointInfinite:
     {
         printf("Curve Point is Infinite\n");
+        return;
+    }
+    case PointNotOnCurve:
+    {
+        printf("Point is not on the current active curve\n");
+        return;
+    }
+    case DecryptionFail:
+    {
+        printf("Decryption failed for unknown reason\n");
+        return;
+    }
+    case HashValueError:
+    {
+        printf("Decryption failed for hash value error\n");
         return;
     }
     }
@@ -77,7 +97,25 @@ bool CheckCurvePointInfinite(epoint* pk)//check if the public key is valid
         return Flag1 && Flag2;
     }
 }
-void Encryption(int m, epoint* pk,epoint *G,epoint *OutC1,epoint*OutC2,uint32_t *OutC3)//¼ÓÃÜÇ°£¬Ò»¶¨ÒªÒªÉèÖÃActive Curve
+void epoint_print(epoint* point)
+{
+    big x, y;
+    x = mirvar(0);
+    y = mirvar(0);
+    epoint_get(point, x, y);
+    cotnum(x, stdout);
+    cotnum(y, stdout);
+}
+void print_hash(uint32_t *HashOutput)
+{
+    for (int i = 0; i < 8; i++)
+    {
+        
+        printf("%x ", HashOutput[i]);
+    }
+    printf("\n");
+}
+void Encryption(int m, epoint* pk,epoint *G,epoint *OutC1,epoint*OutC2,uint32_t *OutC3,char* kout)//åŠ å¯†å‰ï¼Œä¸€å®šè¦è¦è®¾ç½®Active Curve
 {
     RuntimeLogger->info("Encryption Start");
     RuntimeLogger->info("Public Key Validity Check");
@@ -117,21 +155,33 @@ void Encryption(int m, epoint* pk,epoint *G,epoint *OutC1,epoint*OutC2,uint32_t 
     {
         PrintErrorMessage(error);
     }
-    epoint_free(S);//epointÔÚheapÉÏ·ÖÅä¿Õ¼ä£¬·ÏÆú²ÎÊýÇëÁ¢¼´Ïú»Ù
+    epoint_free(S);//epointåœ¨heapä¸Šåˆ†é…ç©ºé—´ï¼ŒåºŸå¼ƒå‚æ•°è¯·ç«‹å³é”€æ¯
 
     RuntimeLogger->info("Start C1 calculatioin");
-    /*********************************C1ÃÜÎÄ¼ÆËã**************************************************/
-    bigbits(255, k);//Éú³ÉËæ»úÊýK
-    ecurve_mult(k, G, c1);//¼ÆËãÃÜÎÄc1=k*G
-    /*********************************C1ÃÜÎÄ¼ÆËã**************************************************/
+    /*********************************C1å¯†æ–‡è®¡ç®—**************************************************/
+    bigbits(256, k);//ç”Ÿæˆéšæœºæ•°K
+    char* temp = (char*)malloc(32 * sizeof(char));
+    big_to_bytes(32, k, temp, RightJustify);
+    memcpy(kout, temp, 32);
+    //big_to_bytes()
+    ecurve_mult(k, G, c1);//è®¡ç®—å¯†æ–‡c1=k*G
+    //epoint_print(c1);
+    //epoint_print(c1);
+    /*********************************C1å¯†æ–‡è®¡ç®—**************************************************/
     RuntimeLogger->info("C1 calculation complete");
-    ecurve_mult(k, pk, X2Y2);//¼ÆËãµã(X2,Y2)=k*pk
+    ecurve_mult(k, pk, X2Y2);//è®¡ç®—ç‚¹(X2,Y2)=k*pk
+    //epoint_print(X2Y2);
+    epoint_get(X2Y2, x2, y2);
+    big_to_bytes(32, x2, (char*)X2, RightJustify);
+    big_to_bytes(32, y2, (char*)Y2, RightJustify);
+    //epoint_print(X2Y2);
     epoint_copy(X2Y2, ToxicWaste);
+    //epoint_print(X2Y2);
     RuntimeLogger->info("Start C2 calculatioin");
-    /*********************************C2ÃÜÎÄ¼ÆËã**************************************************/
+    /*********************************C2å¯†æ–‡è®¡ç®—**************************************************/
     if (m == 0)
     {
-        ecurve_add(G, ToxicWaste);//ToxicWasteµÄÖµ¾ÍÊÇX2Y2µÄÖµ£¬ÕâÑù×öÊÇÎªÁË·À·¶²àÐÅµÀ¹¥»÷,±£Ö¤¼ÆËãÁ¿Ò»ÖÂ
+        ecurve_add(G, ToxicWaste);//ToxicWasteçš„å€¼å°±æ˜¯X2Y2çš„å€¼ï¼Œè¿™æ ·åšæ˜¯ä¸ºäº†é˜²èŒƒä¾§ä¿¡é“æ”»å‡»,ä¿è¯è®¡ç®—é‡ä¸€è‡´
         epoint_copy(X2Y2, c2);
     }
     else if (m == 1)
@@ -139,32 +189,107 @@ void Encryption(int m, epoint* pk,epoint *G,epoint *OutC1,epoint*OutC2,uint32_t 
         ecurve_add(G, X2Y2);
         epoint_copy(X2Y2, c2);
     }
-    /*********************************C2ÃÜÎÄ¼ÆËã**************************************************/
+    //epoint_print(c2);
+    /*********************************C2å¯†æ–‡è®¡ç®—**************************************************/
     RuntimeLogger->info("C2 calculation complete");
     epoint_free(ToxicWaste);
     RuntimeLogger->info("Start C3 calculatioin");
-    /*********************************C3ÃÜÎÄ¼ÆËã**************************************************/
-    epoint_get(X2Y2, x2, y2);
-    big_to_bytes(32, x2, (char*)X2, RightJustify);
-    big_to_bytes(32, y2, (char*)Y2, RightJustify);
+    /*********************************C3å¯†æ–‡è®¡ç®—**************************************************/
     for (int i = 0; i < 32; i++)
         HashInput[i] = X2[i];
-    HashInput[33] = (u8)m;
+    HashInput[32] = 1;
     for (int i = 33; i < 65; i++)
         HashInput[i] = Y2[i - 33];
+    for (int i = 0; i < 65; i++)
+    {
+        printf("%x", HashInput[i]);
+    }
+    printf("\n");
     Sm3_1024(HashInput, 520);
+    print_hash(SM3_hash_result);
     for (int i = 0; i < 8; i++)
-        C3[i] = SM3_hash_result[i];
-    /*********************************C3ÃÜÎÄ¼ÆËã**************************************************/
+        OutC3[i] = SM3_hash_result[i];
+    /*********************************C3å¯†æ–‡è®¡ç®—**************************************************/
     RuntimeLogger->info("C3 calculation complete");
-    /*********************************·µ»Ø½á¹û**************************************************/
-    epoint_copy(OutC1, c1);
-    epoint_copy(OutC2, c2);
-    OutC3 = C3;
+    /*********************************è¿”å›žç»“æžœ**************************************************/
+    epoint_copy(c1, OutC1);
+    epoint_copy(c2, OutC2);
     RuntimeLogger->info("Result Returned");
-    /*********************************ÊÍ·Å¿Õ¼ä**************************************************/
+    /*********************************é‡Šæ”¾ç©ºé—´**************************************************/
     epoint_free(c1);
     epoint_free(c2);
     epoint_free(X2Y2);
     RuntimeLogger->info("Heap Space Free Complete");
+}
+int Decryption(epoint* c1, epoint* c2,epoint*G, uint32_t* c3, big sk)
+{
+
+    big x2, y2;
+    u8* X2, * Y2, * HashInput;
+    uint32_t* u = (uint32_t*)malloc(8 * sizeof(uint32_t));
+    X2 = (u8*)malloc(32 * sizeof(u8));
+    Y2 = (u8*)malloc(32 * sizeof(u8));
+    HashInput = (u8*)malloc(65 * sizeof(u8));
+    x2 = mirvar(0);
+    y2 = mirvar(0);
+    if (point_at_infinity(c1) || point_at_infinity(c2))
+    {
+        RuntimeLogger->error("C1 or C2 is at infinity");
+        return -1;
+    }
+    big x = mirvar(0);
+    big y = mirvar(0);
+    epoint_get(c1, x, y);
+    if (!epoint_x(x))
+    {
+        RuntimeLogger->error("C1 is not on the curve");
+        throw PointNotOnCurve;
+        return -1;
+    }
+    epoint* X2Y2, * mG;
+    X2Y2 = epoint_init();
+    mG = epoint_init();
+    //epoint_print(c1);
+    //cotnum(sk,stdout);
+    ecurve_mult(sk, c1, X2Y2);
+    epoint_get(X2Y2, x2, y2);
+    
+    //epoint_print(X2Y2);
+    big_to_bytes(32, x2, (char*)X2, RightJustify);
+    big_to_bytes(32, y2, (char*)Y2, RightJustify);
+    printf("\n");
+    ecurve_sub(X2Y2, c2);
+    epoint_copy(c2, mG);
+    if (point_at_infinity(c2))
+    {
+        return 0;
+    }
+    if (epoint_comp(G, mG))
+    {
+        for (int i = 0; i < 32; i++)
+        {
+            HashInput[i] = X2[i];
+        }
+        HashInput[32] = 1;
+        for (int i = 33; i < 65; i++)
+        {
+            HashInput[i] = Y2[i - 33];
+        }
+        
+        Sm3_1024(HashInput, 520);
+        
+        for (int i = 0; i < 8; i++)
+        {
+            if (SM3_hash_result[i] != c3[i])
+            {
+                printf("%x %x\n", SM3_hash_result[i],c3[i]);
+                RuntimeLogger->error("Decryption failed for hash value error");
+                throw HashValueError;
+            }
+        }
+        return 1;
+        RuntimeLogger->info("Decryption Complete");
+    }
+    RuntimeLogger->error("Decryption Bad Parameters");
+    throw DecryptionFail;
 }
