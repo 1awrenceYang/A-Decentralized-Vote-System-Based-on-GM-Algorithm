@@ -92,10 +92,12 @@ int main()
     char* k1 = (char*)malloc(32 * sizeof(char));
     //cotnum(sk, stdout);
     int m = 1;
-    Encryption(m, pk, G, c1, c2, c3, k1);
+    int m1 = 1;
+    Encryption(m, pk, G, c1, c2, c3);
     //big kk = mirvar(0);
     //bytes_to_big(32, k1, kk);
-    printf("-------------------------Encryption Complete-----------------------------\n");
+    
+    printf("-------------------------First Encryption Complete-----------------------------\n");
     printf("C1 ciphertext:\n");
     epoint_print(c1);
     printf("C2 ciphertext:\n");
@@ -103,40 +105,62 @@ int main()
     printf("C3 ciphertext:\n");
     print_hash(c3);
     printf("plaintext:\n");
-    printf("%d", m);
+    printf("%d\n\n\n", m);
     //epoint_print(c1);
     //epoint_print(c2);
     //print_hash(c3);
     int i = 0;
-    try
+    /*try
     {
         i = Decryption(c1, c2, G, c3, sk);
+        printf("plaintext:%d\n", i);
+        printf("-------------------------First Decryption Complete-----------------------------\n");
+        
         
     }
     catch (int error)
     {
         PrintErrorMessage(error);
-    }
+    }*/
     printf("\n\n\n");
-    printf("-------------------------Decryption Complete-----------------------------\n");
+    
+    epoint* c11, * c22;
+    uint32_t* c33;
+    c11 = epoint_init();
+    c22 = epoint_init();
+    c33 = (uint32_t*)malloc(8 * sizeof(uint32_t));
+    Encryption(m1, pk, G, c11, c22, c33);
+    printf("-------------------------Second Encryption Complete-----------------------------\n");
     printf("C1 ciphertext:\n");
-    epoint_print(c1);
+    epoint_print(c11);
     printf("C2 ciphertext:\n");
-    epoint_print(c2);
+    epoint_print(c22);
     printf("C3 ciphertext:\n");
-    print_hash(c3);
+    print_hash(c33);
     printf("plaintext:\n");
-    printf("%d", i);
-   // bigbits(256, k);
-   // epoint* t1 = epoint_init();
-   // epoint* t2 = epoint_init();
-   // epoint* t3 = epoint_init();
-   // epoint* t4 = epoint_init();
-   // ecurve_mult(kk, G, t1);
-   // ecurve_mult(sk, t1, t2);
-   // ecurve_mult(sk, G, t3);
-   // ecurve_mult(kk, t3, t4);
-   // //epoint_print(t2);
-   // printf("\n");
-   //// epoint_print(t4);
+    printf("%d\n\n\n", m1);
+    /*int m2=Decryption(c11, c22, G, c33, sk);
+    printf("Decryption plaintext result:\n");
+    printf("%d", m2);*/
+    epoint* HomoC1, * HomoC2;
+    HomoC1 = epoint_init();
+    HomoC2 = epoint_init();
+    HomoEncryption(c1, c11, c2, c22, HomoC1, HomoC2);
+    //HomoEncryption(HomoC1, c1, HomoC2, c2, HomoC1, HomoC2);
+    printf("Homo C1 Ciphertext:\n");
+    epoint_print(HomoC1);
+    printf("Homo C2 Ciphertext:\n");
+    epoint_print(HomoC2);
+
+    try
+    {
+        int m2 = 0;
+        HomoDecryption(HomoC1, HomoC2, G, sk, &m2);
+        printf("HomoDecryption result:\n");
+        printf("%x", m2);
+    }
+    catch (int error)
+    {
+        PrintErrorMessage(error);
+    }
 }
