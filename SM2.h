@@ -11,6 +11,7 @@ extern "C"
 #include "include/spdlog/sinks/basic_file_sink.h"
 #include "include/spdlog/sinks/rotating_file_sink.h"
 #include<time.h>
+
 using namespace spdlog;
 /*****************************************Parameters decleration*****************************************/
 #define VotePass 1
@@ -25,6 +26,8 @@ using namespace spdlog;
 #define PointNotOnCurve 3
 #define DecryptionFail 4
 #define HashValueError 5
+#define HomoDecryptionError 6
+#define MaxVoteNum 100
 auto RuntimeLogger = spdlog::basic_logger_mt("basic_logger", "logs/RunTimeLog.txt");
 typedef uint8_t u8;
 /*****************************************Parameters decleration*****************************************/
@@ -50,6 +53,11 @@ void PrintErrorMessage(int Error)
     case HashValueError:
     {
         printf("Decryption failed for hash value error\n");
+        return;
+    }
+    case HomoDecryptionError:
+    {
+        printf("Homo Decryption failed for unknown reason\n");
         return;
     }
     }
@@ -115,7 +123,7 @@ void print_hash(uint32_t *HashOutput)
     }
     printf("\n");
 }
-void Encryption(int m, epoint* pk,epoint *G,epoint *OutC1,epoint*OutC2,uint32_t *OutC3,char* kout)//加密前，一定要要设置Active Curve
+void Encryption(int m, epoint* pk,epoint *G,epoint *OutC1,epoint*OutC2,uint32_t *OutC3)//加密前，一定要要设置Active Curve
 {
     RuntimeLogger->info("Encryption Start");
     RuntimeLogger->info("Public Key Validity Check");
@@ -162,7 +170,6 @@ void Encryption(int m, epoint* pk,epoint *G,epoint *OutC1,epoint*OutC2,uint32_t 
     bigbits(256, k);//生成随机数K
     char* temp = (char*)malloc(32 * sizeof(char));
     big_to_bytes(32, k, temp, RightJustify);
-    memcpy(kout, temp, 32);
     //big_to_bytes()
     ecurve_mult(k, G, c1);//计算密文c1=k*G
     //epoint_print(c1);
@@ -200,13 +207,13 @@ void Encryption(int m, epoint* pk,epoint *G,epoint *OutC1,epoint*OutC2,uint32_t 
     HashInput[32] = 1;
     for (int i = 33; i < 65; i++)
         HashInput[i] = Y2[i - 33];
-    for (int i = 0; i < 65; i++)
+    /*for (int i = 0; i < 65; i++)
     {
         printf("%x", HashInput[i]);
-    }
+    }*/
     printf("\n");
     Sm3_1024(HashInput, 520);
-    print_hash(SM3_hash_result);
+    //print_hash(SM3_hash_result);
     for (int i = 0; i < 8; i++)
         OutC3[i] = SM3_hash_result[i];
     /*********************************C3密文计算**************************************************/
@@ -223,7 +230,13 @@ void Encryption(int m, epoint* pk,epoint *G,epoint *OutC1,epoint*OutC2,uint32_t 
 }
 int Decryption(epoint* c1, epoint* c2,epoint*G, uint32_t* c3, big sk)
 {
-
+    printf("C1 ciphertext:\n");
+    epoint_print(c1);
+    printf("C2 ciphertext:\n");
+    epoint_print(c2);
+    printf("C3 ciphertext:\n");
+    print_hash(c3);
+    //FIXME---加入日志以及内存释放！！！！！！！！
     big x2, y2;
     u8* X2, * Y2, * HashInput;
     uint32_t* u = (uint32_t*)malloc(8 * sizeof(uint32_t));
@@ -260,7 +273,7 @@ int Decryption(epoint* c1, epoint* c2,epoint*G, uint32_t* c3, big sk)
     printf("\n");
     ecurve_sub(X2Y2, c2);
     epoint_copy(c2, mG);
-    if (point_at_infinity(c2))
+    if (point_at_infinity(c2))//FIXME!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!-----add Hash value check!
     {
         return 0;
     }
@@ -292,4 +305,93 @@ int Decryption(epoint* c1, epoint* c2,epoint*G, uint32_t* c3, big sk)
     }
     RuntimeLogger->error("Decryption Bad Parameters");
     throw DecryptionFail;
+}
+void HomoEncryption(epoint* c1, epoint* c11, epoint* c2, epoint* c22,epoint*OutC1,epoint*OutC2)
+{
+    if (point_at_infinity(c1) || point_at_infinity(c11), point_at_infinity(c2) || point_at_infinity(c22))
+    {
+        RuntimeLogger->error("Homo Encryption failed for point infinity");
+        throw PointInfinite;
+    }
+    big x1, x2, x3, x4, y1, y2, y3, y4;
+    x1 = mirvar(0);
+    x2 = mirvar(0);
+    x3 = mirvar(0);
+    x4 = mirvar(0);
+    y1 = mirvar(0);
+    y2 = mirvar(0);
+    y3 = mirvar(0);
+    y4 = mirvar(0);
+    epoint_get(c1, x1, y1);
+    epoint_get(c11, x2, y2);
+    epoint_get(c2, x3, y3);
+    epoint_get(c22, x4, y4);
+    if (!epoint_x(x1) || !epoint_x(x2) || !epoint_x(x3) || !epoint_x(x4))
+    {
+        RuntimeLogger->error("Homo Encryption failed for point not on curve");
+        throw PointNotOnCurve;
+    }
+    RuntimeLogger->info("Homo Encryption start");
+    epoint* temp1, * temp2;
+    temp1 = epoint_init();
+    temp2 = epoint_init();
+    epoint_copy(c11, temp1);//存下原来的密文值
+    epoint_copy(c22, temp2);
+    ecurve_add(c1, c11);
+    ecurve_add(c2, c22);
+    RuntimeLogger->info("Homo Encryption complete");
+    epoint_copy(c11, OutC1);
+    epoint_copy(c22, OutC2);
+    epoint_copy(temp1, c11);
+    epoint_copy(temp2, c22);
+    epoint_free(temp1);
+    epoint_free(temp2);
+}
+void HomoDecryption(epoint* c1, epoint* c2, epoint* G , big sk , int *m)
+{
+    if (point_at_infinity(c1) || point_at_infinity(c2))
+    {
+        RuntimeLogger->error("Homo Decryption failed for point infinity");
+        throw PointInfinite;
+    }
+    big x1, x2, y1, y2, r;
+    epoint* mG, * temp, * tempC2, * BSGS;
+    mG = epoint_init();
+    temp = epoint_init();
+    tempC2 = epoint_init();
+    BSGS = epoint_init();
+    x1 = mirvar(0);
+    x2 = mirvar(0);
+    y1 = mirvar(0);
+    y2 = mirvar(0);
+    epoint_get(c1, x1, y1);
+    epoint_get(c2, x2, y2);
+    if (!epoint_x(x1) || !epoint_x(x2))
+    {
+        RuntimeLogger->error("Homo Decryption failed for point not on curve");
+        throw PointNotOnCurve;
+    }
+    RuntimeLogger->info("Homo Decryption start");
+    epoint_copy(c2, tempC2);
+    ecurve_mult(sk, c1, temp);
+    ecurve_sub(temp, c2);//now c2=mG
+    epoint_copy(c2, mG);
+    //printf("mG:\n");
+    //epoint_print(mG);
+    epoint_copy(tempC2, c2);
+    for (int i = 0; i < MaxVoteNum; i++)
+    {
+        r = mirvar(i);
+        ecurve_mult(r, G, BSGS);
+        /*printf("BSGS:\n");
+        epoint_print(BSGS);*/
+        if (epoint_comp(BSGS, mG))
+        {
+            RuntimeLogger->info("Homo Decryption complete");
+            *m = i;
+            return;
+        }
+    }
+    RuntimeLogger->error("Homo Decryption error for unknown reason");
+    throw HomoDecryptionError;
 }
