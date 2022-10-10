@@ -187,17 +187,21 @@ int main()
         for (int j = 0; j < 4; j++)
             cotnum(aij[i][j], stdout);
     }*/
+
     big* result = CalSecretShareGiven(4, 3, aij);
-    cotnum(result[0], stdout);
+    /*cotnum(result[0], stdout);
     cotnum(result[1], stdout);
     cotnum(result[2], stdout);
-    cotnum(result[3], stdout);
-    big x = mirvar(3);
+    cotnum(result[3], stdout);*/
+    /*big x = mirvar(7);
     big y = mirvar(2);
-    big z = mirvar(0);
+    big z = mirvar(3);
     divide(x, y, z);
     cotnum(x, stdout);
     cotnum(y, stdout);
-    cotnum(z, stdout);
-
+    cotnum(z, stdout);*/
+    /*big a = mirvar(3);
+    cotnum(CalDominator(1,4), stdout);*/
+    big sk = SecretShareSk(result, 3);
+    cotnum(sk, stdout);
 }
