@@ -468,10 +468,51 @@ big* CalSecretShareGiven(int n, int t, big** aij)//计算给定了算出的yij�
     }
     return result;
 }
-//big CalNumerator(int r,int t)
-//{
-//    for (int i = 0; i < t; i++)
-//    {
-//
-//    }
-//}
+big CalNumerator(int r,int t)//给定一个r，给定一个t，计算delta函数的分子部分
+{
+    big acc = mirvar(1);
+    big j = mirvar(0);
+    for (int i = 1; i <= t ; i++)
+    {
+        j = mirvar(i);
+        if (i == r)
+            continue;
+        negify(j, j);
+        multiply(acc, j, acc);
+    }
+    return acc;
+}
+big CalDominator(int r, int t)//给定一个r，给定一个t，计算delta函数的分母部分
+{
+    big acc = mirvar(1);
+    big temp = mirvar(0);
+    big r_big = mirvar(r);
+    big j = mirvar(0);
+    for (int i = 1; i <= t; i++)
+    {
+        if (r == i)
+            continue;
+        j = mirvar(i);
+        subtract(r_big, j, temp);//temp=r-j
+        multiply(acc, temp, acc);
+    }
+    return acc;
+}
+big SecretShareSk(big *Yr,int t)//用给定的SecretShare Yr计算秘密值sk
+{
+    big acc = mirvar(0);
+    big NumAcc = mirvar(1);
+    big Numerator = mirvar(0);//CalNumerator(r, t);
+    big temp = mirvar(0);
+    big Dominator = mirvar(0);//CalDominator(r, t);
+    for (int i = 1; i <= t; i++)
+    {
+        Numerator = CalNumerator(i, t);
+        Dominator = CalDominator(i, t);
+        multiply(Numerator, Yr[i - 1], NumAcc);
+        divide(NumAcc, Dominator, temp);
+        add(acc, temp, acc);
+        temp = mirvar(0);
+    }
+    return acc;
+}
