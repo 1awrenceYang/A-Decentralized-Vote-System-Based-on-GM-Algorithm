@@ -461,7 +461,7 @@ big* CalSecretShareGiven(int n, int t, big** aij)//计算给定了算出的yij�
             add(result[j], aij[i][j], result[j]);
         }
     }
-    for (int i = 0; i < 4; i++)
+    for (int i = 0; i < n; i++)
     {
         divide(result[i], q, temp);
 
@@ -498,7 +498,7 @@ big CalDominator(int r, int t)//给定一个r，给定一个t，计算delta函�
     }
     return acc;
 }
-big SecretShareSk(big *Yr,int t)//用给定的SecretShare Yr计算秘密值sk
+big SecretShareSk(big *Yr,int t,big q)//用给定的SecretShare Yr计算秘密值sk
 {
     big acc = mirvar(0);
     big NumAcc = mirvar(1);
@@ -511,8 +511,71 @@ big SecretShareSk(big *Yr,int t)//用给定的SecretShare Yr计算秘密值sk
         Dominator = CalDominator(i, t);
         multiply(Numerator, Yr[i - 1], NumAcc);
         divide(NumAcc, Dominator, temp);
+        divide(temp, q, q);//模q
         add(acc, temp, acc);
         temp = mirvar(0);
     }
     return acc;
+}
+epoint* SecretSharePk(big* Yr,big q, int t, epoint* G)//用给定的SecretShare Yr计算公钥，而不泄露私钥
+{
+    epoint* SharePk = epoint_init();
+    epoint* PkAcc = epoint_init();
+    big acc = mirvar(0);
+    big NumAcc = mirvar(1);
+    big Numerator = mirvar(0);//CalNumerator(r, t);
+    big temp = mirvar(0);
+    big Dominator = mirvar(0);//CalDominator(r, t);
+    for (int i = 1; i <= t; i++)
+    {
+        Numerator = CalNumerator(i, t);
+        Dominator = CalDominator(i, t);
+        multiply(Numerator, Yr[i - 1], NumAcc);
+        divide(NumAcc, Dominator, temp);
+        divide(temp, q, q);//模q
+        ecurve_mult(temp, G, SharePk);
+        ecurve_add(SharePk, PkAcc);
+        temp = mirvar(0);
+    }
+    return PkAcc;
+}
+big* GenPkbySecretShare(int n, int t, epoint*G,epoint *PkOut,big q)//输入总人数，参与秘密分享的人数，生成元G，输出一个公钥，以及随机数参数，用于解密时生成sk*C1
+{
+    big** RandomPolyParam = (big**)malloc((n * n) * sizeof(big));
+    big** aij = (big**)malloc((n * n) * sizeof(big));
+    big* SecretShare = (big*)malloc(n * sizeof(big));
+    big sk = mirvar(0);
+    epoint* pk = epoint_init();
+    printf("秘密共享初始化完毕，正在生成公私钥：\n");
+    /************************************************生成n个t-1次随机多项式**********************************************************/
+    printf("正在生成随机多项式：\n\n");
+    for (int i = 0; i < n; i++)
+    {
+        RandomPolyParam[i] = GenPolyParam(t);
+    }
+    
+    printf("随机多项式生成成功：\n\n");
+    /***************************************通过生成的n个t-1次多项式，计算对应的Ui***************************************************/
+    printf("正在计算多项式值：\n\n");
+    for (int i = 0; i < n; i++)
+    {
+        aij[i] = CalFij(n, t, RandomPolyParam[i]);
+    }
+    printf("计算成功：\n\n");
+    /***************************************通过计算出的Ui，模拟通过星形拓扑发送至每一个参与者，计算Secret Share*********************/
+    printf("正在计算秘密分享值：\n\n");
+    SecretShare = CalSecretShareGiven(n, t, aij);
+    printf("秘密分享值计算完毕：\n\n");
+    /***************************************通过Secret Share，计算sk*G,即pk而不泄露sk************************************************/
+    printf("生成PK中：\n\n");
+    pk = SecretSharePk(SecretShare, q, t, G);
+    printf("生成完毕：\n\n");
+    epoint_copy(pk, PkOut);
+    return SecretShare;
+}
+big GenSkBySecretShare(int t,big *SecretShare,big q)
+{
+    big sk = mirvar(0);
+    sk = SecretShareSk(SecretShare, t, q);
+    return sk;
 }
