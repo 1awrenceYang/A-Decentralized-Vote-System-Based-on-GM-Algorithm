@@ -11,7 +11,6 @@ extern "C"
 #include "include/spdlog/sinks/basic_file_sink.h"
 #include "include/spdlog/sinks/rotating_file_sink.h"
 #include<time.h>
-
 using namespace spdlog;
 /*****************************************Parameters decleration*****************************************/
 #define VotePass 1
@@ -395,3 +394,84 @@ void HomoDecryption(epoint* c1, epoint* c2, epoint* G , big sk , int *m)
     RuntimeLogger->error("Homo Decryption error for unknown reason");
     throw HomoDecryptionError;
 }
+big* GenPolyParam(int t)//生成一个多项式的随机参数
+{
+    big* aij = (big*)malloc(t * sizeof(big));//aij声明与初始化,
+    for (int i = 0; i < t; i++)
+    {
+        aij[i] = mirvar(0);
+    }
+    for (int i = 0; i < t; i++)
+    {
+        bigbits(255, aij[i]);
+    }
+    return aij;//规定从左至右分别为a0,a1,a2,a3.....从常数项开始，一次项系数，二次项系数......
+}
+big Expoent(int n, big a)//计算a的n次方,注意这些a不可以是大数，只能是投票人数之类的小数
+{
+    big result = mirvar(1);
+    for (int i = 0; i < n; i++)
+    {
+        multiply(result, a, result);
+    }
+    return result;
+}
+big GenYij(int t,int j,big *aij)//计算一个给定系数aij，和给定输入j的多项式的输出
+{
+    big fj = mirvar(0);
+    big p = mirvar(1);
+    big temp = mirvar(1);
+    for (int a = 0; a < t; a++)
+    {
+        if (a == 0)
+            add(aij[a], fj, fj);
+        else
+        {
+            p = mirvar(j);
+            temp = mirvar(1);
+            multiply(aij[a], Expoent(a, p), temp);//aij*x^(j)
+            add(temp, fj, fj);
+        }
+    }
+    return fj;
+}
+big* CalFij(int n, int t, big* aij)//计算一个给定系数aij，的j个参数的数组
+{
+    big* ui = (big*)malloc(n * sizeof(big));
+    big temp = mirvar(0);
+    for (int i = 0; i < n; i++)
+    {
+        temp = GenYij(t, i+1, aij);
+        ui[i] = temp;
+    }
+    return ui;
+}
+big* CalSecretShareGiven(int n, int t, big** aij)//计算给定了算出的yij二维数组，算出每一个Uj收到的Yij的和，也就是得出秘密份额Yj
+{
+    big q = mirvar(0);
+    big temp = mirvar(0);
+    bytes_to_big(32, Sm2CurveParamG_Order, q);
+    big* result = (big*)malloc(n * sizeof(big));
+    for (int i = 0; i < n; i++)
+        result[i] = mirvar(0);
+    for (int i = 0; i < n; i++)//对矩阵的每一列求和，采用行优先方法，防止人数过多时性能下降
+    {
+        for (int j = 0; j < n; j++)
+        {
+            add(result[j], aij[i][j], result[j]);
+        }
+    }
+    for (int i = 0; i < 4; i++)
+    {
+        divide(result[i], q, temp);
+
+    }
+    return result;
+}
+//big CalNumerator(int r,int t)
+//{
+//    for (int i = 0; i < t; i++)
+//    {
+//
+//    }
+//}
