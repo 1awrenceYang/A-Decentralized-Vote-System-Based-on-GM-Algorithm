@@ -130,7 +130,7 @@ void SM2Encryption(epoint* G, epoint * Pk , uint8_t* M, unsigned int Length,uint
 	x2 = (uint8_t*)malloc(32 * sizeof(uint8_t));
 	y2 = (uint8_t*)malloc(32 * sizeof(uint8_t));
 	X2andY2 = (uint8_t*)malloc(64 * sizeof(uint8_t));
-	C2 = (uint8_t*)malloc(32 * sizeof(uint8_t));
+	C2 = (uint8_t*)malloc((Length / 8) * sizeof(uint8_t));
 	HashInput = (uint8_t*)malloc(((512 + Length) / 8) * sizeof(uint8_t));
 	C = (uint8_t*)malloc((65 + 32 + Length / 8) * sizeof(uint8_t));
 	u8C3 = (uint8_t*)malloc(32 * sizeof(uint8_t));
@@ -142,8 +142,8 @@ void SM2Encryption(epoint* G, epoint * Pk , uint8_t* M, unsigned int Length,uint
 	X2 = mirvar(0);
 	Y2 = mirvar(0);
 	//----------------------------------------------A1½×¶Î-----------------------------------------------------------check
-	//bigbits(256, k);
-	bytes_to_big(32, TempK, k);
+	bigbits(256, k);
+	//bytes_to_big(32, TempK, k);
 	//cotnum(k, stdout);
 	//----------------------------------------------A1½×¶Î-----------------------------------------------------------
 
@@ -152,7 +152,7 @@ void SM2Encryption(epoint* G, epoint * Pk , uint8_t* M, unsigned int Length,uint
 	ecurve_mult(k, G, C1);
 	Point2BitString(C1, C1BitString);
 	//----------------------------------------------A2½×¶Î-----------------------------------------------------------
-
+	
 	//----------------------------------------------A3½×¶Î-----------------------------------------------------------check
 	ecurve_mult(h, Pk, hPK);
 	if (point_at_infinity(hPK))
@@ -161,13 +161,13 @@ void SM2Encryption(epoint* G, epoint * Pk , uint8_t* M, unsigned int Length,uint
 		return;
 	}
 	//----------------------------------------------A3½×¶Î-----------------------------------------------------------
-
+	
 
 	//----------------------------------------------A4½×¶Î-----------------------------------------------------------check
 	ecurve_mult(k, Pk, kPK);
 	//epoint_print(kPK);
 	//----------------------------------------------A4½×¶Î-----------------------------------------------------------
-
+	
 	//----------------------------------------------A5½×¶Î-----------------------------------------------------------
 	epoint_get(kPK, X2, Y2);
 	big_to_bytes(32, X2, (char*)x2, RightJustify);
@@ -177,17 +177,20 @@ void SM2Encryption(epoint* G, epoint * Pk , uint8_t* M, unsigned int Length,uint
 	for (int i = 32; i < 64; i++)
 		X2andY2[i] = y2[i - 32];
 	KDF(X2andY2, t, 64, Length);
+	/*for (int i = 0; i < Length/8; i++)
+	{
+		printf("%02X", t[i]);
+	}*/
 	//----------------------------------------------A5½×¶Î-----------------------------------------------------------
-
+	
 
 	//----------------------------------------------A6½×¶Î-----------------------------------------------------------
-	ptr = (uint8_t*)t;
+	//ptr = (uint8_t*)t;
 	for (int i = 0; i < Length/8; i++)
 	{
-		C2[i] = M[i] ^ ptr[i];
+		C2[i] = M[i] ^ t[i];
 	}
 	//----------------------------------------------A6½×¶Î-----------------------------------------------------------
-	
 	//----------------------------------------------A7½×¶Î-----------------------------------------------------------
 	for (int i = 0; i < 32; i++)
 		HashInput[i] = x2[i];
@@ -241,7 +244,187 @@ void SM2Encryption(epoint* G, epoint * Pk , uint8_t* M, unsigned int Length,uint
 	mirkill(Y2);
 	//---------------------------------------------ÊÍ·ÅÄÚ´æ---------------------------------------------------------
 }
+void GetC1FromCiphertext(uint8_t* Ciphertext, uint8_t* X, uint8_t* Y)
+{
+	for (int i = 0; i < 32; i++)
+		X[i] = Ciphertext[i + 1];
+	for (int i = 0; i < 32; i++)
+		Y[i] = Ciphertext[33 + i];
+}
+bool CompareHash(uint8_t* C3, uint32_t* u)
+{
+	uint32_t* temp = (uint32_t*)malloc(8 * sizeof(uint32_t));
+	uint32_t word = 0;
+	uint8_t t1 = 0, t2 = 0, t3 = 0, t4 = 0;
+	for (int i = 0; i < 8; i++)
+	{
+		t1 = C3[(i + 1) * 4 - 1];
+		t2 = C3[(i + 1) * 4 - 2];
+		t3 = C3[(i + 1) * 4 - 3];
+		t4 = C3[(i + 1) * 4 - 4];
+		word = MERAGE4(t4, t3, t2, t1);
+		temp[i] = word;
+	}
+	for (int i = 0; i < 8; i++)
+	{
+		if (u[i] != temp[i])
+		{
+			free(temp);
+			return 0;
+		}
+	}
+	free(temp);
+	return 1;
+}
+void SM2Decryption(epoint* G, big Sk, uint8_t* Ciphertext, unsigned int Length, uint8_t* Plaintext)//LengthÊÇÃÜÎÄµÄ±ÈÌØ³¤¶È
+{
+	uint8_t* C1, * C1_x, * C1_y, * x2, * y2, * X2andY2, * t, * C2, * tempM, * HashInput, * C3;
+	uint32_t* u;
+	big C1_X, C1_Y, h, X2, Y2;
+	epoint* C1_point, * hC1, * skC1;
+	int PlaintextLength = 0;
+	PlaintextLength = (Length - 256 - 520);//Ã÷ÎÄ³¤¶ÈµÈÓÚÃÜÎÄ³¤¶È¼õÈ¥sm3³¤¶È£¨256bit£©£¬¼õÈ¥C1³¤¶È £¨256+256+8bit£©
+	t = (uint8_t*)malloc((PlaintextLength / 8) * sizeof(uint8_t));
+	C1 = (uint8_t*)malloc(65 * sizeof(uint8_t));
+	C1_x = (uint8_t*)malloc(32 * sizeof(uint8_t));
+	C1_y = (uint8_t*)malloc(32 * sizeof(uint8_t));
+	x2 = (uint8_t*)malloc(32 * sizeof(uint8_t));
+	y2 = (uint8_t*)malloc(32 * sizeof(uint8_t));
+	C2 = (uint8_t*)malloc((PlaintextLength / 8) * sizeof(uint8_t));
+	tempM = (uint8_t*)malloc((PlaintextLength / 8) * sizeof(uint8_t));
+	C3 = (uint8_t*)malloc(32 * sizeof(uint8_t));
+	HashInput = (uint8_t*)malloc((64 + (PlaintextLength / 8)) * sizeof(uint8_t));
+	X2andY2 = (uint8_t*)malloc(64 * sizeof(uint8_t));
+	u = (uint32_t*)malloc(8 * sizeof(uint32_t));
+	C1_X = mirvar(0);
+	C1_Y = mirvar(0);
+	h = mirvar(1);
+	X2 = mirvar(0);
+	Y2 = mirvar(0);
+	C1_point = epoint_init();
+	hC1 = epoint_init();
+	skC1 = epoint_init();
+	//--------------------------------------------------B1½×¶Î------------------------------------------------------check
+	GetC1FromCiphertext(Ciphertext, C1_x, C1_y);
+	bytes_to_big(32, (char*)C1_x, C1_X);
+	bytes_to_big(32, (char*)C1_y, C1_Y);
+	if (!epoint_x(C1_X))
+	{
+		printf("Invalid C1 point cordinate!\n");
+		return;
+	}
+	epoint_set(C1_X, C1_Y, 1, C1_point);
+	//epoint_print(C1_point);
+	//--------------------------------------------------B1½×¶Î------------------------------------------------------
 
+
+
+	//--------------------------------------------------B2½×¶Î------------------------------------------------------check
+	ecurve_mult(h, C1_point, hC1);
+	if (point_at_infinity(hC1))
+	{
+		printf("h * C1 is at Infinity!\n");
+		return;
+	}
+	//epoint_print(hC1);
+	//--------------------------------------------------B1½×¶Î------------------------------------------------------
+
+
+
+	//--------------------------------------------------B3½×¶Î------------------------------------------------------check
+	ecurve_mult(Sk, C1_point, skC1);
+	//epoint_print(skC1);
+	epoint_get(skC1, X2, Y2);
+	big_to_bytes(32, X2, (char*)x2, RightJustify);
+	big_to_bytes(32, Y2, (char*)y2, RightJustify);
+	//--------------------------------------------------B3½×¶Î------------------------------------------------------
+
+
+
+
+	//--------------------------------------------------B4½×¶Î------------------------------------------------------check
+	for (int i = 0; i < 32; i++)
+		X2andY2[i] = x2[i];
+	for (int i = 0; i < 32; i++)
+		X2andY2[i + 32] = y2[i];
+	KDF(X2andY2, t, 64, PlaintextLength);
+	
+	//--------------------------------------------------B4½×¶Î------------------------------------------------------
+
+
+
+
+	//--------------------------------------------------B5½×¶Î------------------------------------------------------check
+	for (int i = 0; i < PlaintextLength / 8; i++)
+		C2[i] = Ciphertext[65 + 32 + i];
+	/*for (int i = 0; i < PlaintextLength / 8; i++)
+		printf("%02X", C2[i]);
+	printf("\n");
+	for (int i = 0; i < PlaintextLength / 8; i++)
+		printf("%02X", t[i]);*/
+	for (int i = 0; i < PlaintextLength / 8; i++)
+		tempM[i] = C2[i] ^ t[i];
+	/*for (int i = 0; i < PlaintextLength / 8; i++)
+		printf("%02X", tempM[i]);*/
+	
+	//--------------------------------------------------B5½×¶Î------------------------------------------------------
+
+
+
+
+	//--------------------------------------------------B6½×¶Î------------------------------------------------------check
+	//memset(HashInput, 0, 64 + PlaintextLength / 8);
+	for (int i = 0; i < 32; i++)
+		HashInput[i] = x2[i];
+	for (int i = 0; i < PlaintextLength / 8; i++)
+		HashInput[32 + i] = tempM[i];
+	for (int i = 0; i < 32; i++)
+		HashInput[32 + (PlaintextLength / 8) + i] = y2[i];
+	//Align8Print(HashInput, 64 + PlaintextLength / 8);
+	//printf("\n");
+	SM3(HashInput, u, 512 + PlaintextLength);
+	for (int i = 0; i < 32; i++)//È¡³öC3
+		C3[i] = Ciphertext[65 + i];
+	//PrintSM3(u);
+	if (!CompareHash(C3, u))
+	{
+		printf("Hash Value Verify Failed!\n");
+		return;
+	}
+	//--------------------------------------------------B6½×¶Î------------------------------------------------------
+
+
+
+	//--------------------------------------------------B7½×¶Î------------------------------------------------------check
+	for (int i = 0; i < PlaintextLength / 8; i++)
+		Plaintext[i] = tempM[i];
+	//--------------------------------------------------B7½×¶Î------------------------------------------------------
+
+
+
+	//--------------------------------------------------ÄÚ´æÊÍ·Å------------------------------------------------------
+	free(t);
+	free(C1);
+	free(C1_x);
+	free(C1_y);
+	free(x2);
+	free(y2);
+	free(C2);
+	free(tempM);
+	free(C3);
+	free(HashInput);
+	free(u);
+	free(X2andY2);
+	mirkill(C1_X);
+	mirkill(C1_Y);
+	mirkill(h);
+	mirkill(X2);
+	mirkill(Y2);
+	epoint_free(C1_point);
+	epoint_free(hC1);
+	epoint_free(skC1);
+	//--------------------------------------------------ÄÚ´æÊÍ·Å------------------------------------------------------
+}
 #endif
 
 
