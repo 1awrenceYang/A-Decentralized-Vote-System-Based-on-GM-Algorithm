@@ -15,7 +15,7 @@ void GetSeq(int m, int L, int* Out)
 	for (int j = 1; j <= L - 1; j++)
 	{
 		index[m - L + j - 1] = j - 1;
-	}//index´æ´¢×Å L+1 ---M---L-1µÄË³Ðò
+	}//indexå­˜å‚¨ç€ L+1 ---M---L-1çš„é¡ºåº
 	for (int i = 0; i < m - 1; i++)
 		Out[i] = index[i];
 
@@ -35,13 +35,13 @@ void Convert(uint32_t* Input, uint8_t* Output)
 	}
 }
 void GetHashByPKandM(point* PKs, uint8_t* M, uint8_t *Output, uint m, uint Mlength)
-{//PKs:¹«Ô¿¼¯ºÏ  M£ºÃ÷ÎÄÏûÏ¢   m£º¼¯ºÏ½× Mlength£ºÃ÷ÎÄ×Ö½Ú³¤¶È
+{//PKs:å…¬é’¥é›†åˆ  Mï¼šæ˜Žæ–‡æ¶ˆæ¯   mï¼šé›†åˆé˜¶ Mlengthï¼šæ˜Žæ–‡å­—èŠ‚é•¿åº¦
 	uint HashinputBitLenth = 0;
 	uint HashinputByteLength = 0;
-	HashinputBitLenth = (m * 64 + Mlength) * 8;//¹þÏ£ÊäÈëµÄ±ÈÌØ³¤¶È
-	HashinputByteLength = HashinputBitLenth / 8;//¹þÏ£ÊäÈëµÄ×Ö½Ú³¤¶È
+	HashinputBitLenth = (m * 64 + Mlength) * 8;//å“ˆå¸Œè¾“å…¥çš„æ¯”ç‰¹é•¿åº¦
+	HashinputByteLength = HashinputBitLenth / 8;//å“ˆå¸Œè¾“å…¥çš„å­—èŠ‚é•¿åº¦
 	uint8_t* Hashinput = (uint8_t*)malloc(HashinputByteLength * sizeof(uint8_t));
-	uint8_t* ux, * uy;//¹«Ô¿Á½¸ö×ø±ê
+	uint8_t* ux, * uy;//å…¬é’¥ä¸¤ä¸ªåæ ‡
 	uint8_t* HashOutputU8 = (uint8_t*)malloc(32 * sizeof(uint8_t));
 	uint32_t* HashOutputU32 = (uint32_t*)malloc(8 * sizeof(uint32_t));
 	big X, Y;
@@ -49,7 +49,7 @@ void GetHashByPKandM(point* PKs, uint8_t* M, uint8_t *Output, uint m, uint Mleng
 	uy = (uint8_t*)malloc(32 * sizeof(uint8_t));
 	X = mirvar(0);
 	Y = mirvar(0);
-	for (int i = 0; i < Mlength; i++)//¼¶ÁªM
+	for (int i = 0; i < Mlength; i++)//çº§è”M
 		Hashinput[i] = M[i];
 	for (int i = 0; i < m; i++)
 	{
@@ -122,8 +122,8 @@ void CalculateBL1_BL2(point G, uint8_t* BL1, uint8_t* BL2,big OutK)
 	epoint_free(BL1_point);
 	
 }
-void CalculateBi( point G, point PK, uint8_t *Bl_12, uint8_t *ai, uint8_t *Lhash, uint8_t *BL)//ÊäÈë£ºPKÊÇ¸Ã³ÉÔ±µÄ¹«Ô¿,Õâ¸öº¯Êý¼ÆËãµ¥¸ö³ÉÔ±µÄÃÜÎÄ
-{//Bl_12¼´ÊÇb(L-1)2,ÓÃÓÚ¼ÆËãbi2ÓÃ
+void CalculateBi( point G, point PK, uint8_t *Bl_12, uint8_t *ai, uint8_t *Lhash, uint8_t *BL)//è¾“å…¥ï¼šPKæ˜¯è¯¥æˆå‘˜çš„å…¬é’¥,è¿™ä¸ªå‡½æ•°è®¡ç®—å•ä¸ªæˆå‘˜çš„å¯†æ–‡
+{//Bl_12å³æ˜¯b(L-1)2,ç”¨äºŽè®¡ç®—bi2ç”¨
 	big k, Xi2, Yi2, X, Y;
 	uint8_t* xi2, * yi2, * x, * y, * Xi2andYi2, * ti, * HashoutputChar, * bi2, * bi1, * bi3, * bi3Hashinput;
 	uint32_t* HashoutputU32, * bi3U32;
@@ -156,7 +156,7 @@ void CalculateBi( point G, point PK, uint8_t *Bl_12, uint8_t *ai, uint8_t *Lhash
 	for (int i = 0; i < 32; i++)
 		bi1[i] = x[i];
 	for (int i = 0; i < 32; i++)
-		bi1[32 + i] = y[i];//µÃµ½bi1
+		bi1[32 + i] = y[i];//å¾—åˆ°bi1
 	ecurve_mult(k, PK, KiPi);
 	epoint_get(KiPi, Xi2, Yi2);
 	big_to_bytes(32, Xi2, (char*)xi2, RightJustify);
@@ -167,8 +167,8 @@ void CalculateBi( point G, point PK, uint8_t *Bl_12, uint8_t *ai, uint8_t *Lhash
 		Xi2andYi2[32 + i] = yi2[i];
 	KDF(Xi2andYi2, ti, 64);
 	SM3(Bl_12, HashoutputU32, 256);
-	Convert(HashoutputU32, HashoutputChar);//µÃµ½H(b(i-1)2)
-	for (int i = 0; i < 32; i++)//µÃµ½bi2
+	Convert(HashoutputU32, HashoutputChar);//å¾—åˆ°H(b(i-1)2)
+	for (int i = 0; i < 32; i++)//å¾—åˆ°bi2
 		bi2[i] = ai[i] ^ Lhash[i] ^ HashoutputChar[i] ^ ti[i];
 
 	for (int i = 0; i < 32; i++)
@@ -212,7 +212,7 @@ void CalculateBi( point G, point PK, uint8_t *Bl_12, uint8_t *ai, uint8_t *Lhash
 	epoint_free(KiPi);
 	epoint_free(Bi1);
 }
-void Genai(int* Seq, int m, uint8_t** ai)//aiÊäÈëÊ±ÓÃÈ«0×Ö½Ú³õÊ¼»¯Öµ
+void Genai(int* Seq, int m, uint8_t** ai)//aiè¾“å…¥æ—¶ç”¨å…¨0å­—èŠ‚åˆå§‹åŒ–å€¼
 {
 	big rand;
 	rand = mirvar(0);
@@ -245,7 +245,7 @@ void Genai(int* Seq, int m, uint8_t** ai)//aiÊäÈëÊ±ÓÃÈ«0×Ö½Ú³õÊ¼»¯Öµ
 	free(aL);
 }
 void CalculateAL(uint8_t* BL, uint8_t* LHash, big SK, uint8_t* Bl_12, uint m, uint L, uint8_t** ai)
-{//BLÊäÈëÊ±£¬Ö»ÓÐBL1 BL2¼ÆËã³öÀ´ÁË£¬½áÊøÊ±£¬»á¼ÆËã³öBL3£¬ai»á¼ÆËã³öaL£¬aLÔÚÊäÈëÊ±ÊÇÈ«0×Ö½Ú
+{//BLè¾“å…¥æ—¶ï¼Œåªæœ‰BL1 BL2è®¡ç®—å‡ºæ¥äº†ï¼Œç»“æŸæ—¶ï¼Œä¼šè®¡ç®—å‡ºBL3ï¼Œaiä¼šè®¡ç®—å‡ºaLï¼ŒaLåœ¨è¾“å…¥æ—¶æ˜¯å…¨0å­—èŠ‚
 	uint8_t* BL1x, * BL1y, * xL2, * yL2, * XL2andYL2, * tL, * ForALHashoutputChar, * BL2, * AL, * BL3, * ForBL3Hashinput;
 	uint32_t* ForALHashOutput, * ForBL3Hashoutput;
 	big BL1X, BL1Y, XL2, YL2;
@@ -290,7 +290,7 @@ void CalculateAL(uint8_t* BL, uint8_t* LHash, big SK, uint8_t* Bl_12, uint m, ui
 	for (int i = 0; i < 32; i++)
 		BL2[i] = BL[64 + i];
 	for (int i = 0; i < 32; i++)
-		AL[i] = BL2[i] ^ tL[i] ^ LHash[i] ^ ForALHashoutputChar[i];//¼ÆËãaL
+		AL[i] = BL2[i] ^ tL[i] ^ LHash[i] ^ ForALHashoutputChar[i];//è®¡ç®—aL
 
 	for (int i = 0; i < 32; i++)
 		ForBL3Hashinput[i] = xL2[i];
@@ -303,9 +303,9 @@ void CalculateAL(uint8_t* BL, uint8_t* LHash, big SK, uint8_t* Bl_12, uint m, ui
 
 	SM3(ForBL3Hashinput, ForBL3Hashoutput, 128 * 8);
 	Convert(ForBL3Hashoutput, BL3);
-	for (int i = 0; i < 32; i++)//»Ø´«aL
+	for (int i = 0; i < 32; i++)//å›žä¼ aL
 		ai[L - 1][i] = AL[i];
-	for (int i = 0; i < 32; i++)//»Ø´«BL3
+	for (int i = 0; i < 32; i++)//å›žä¼ BL3
 		BL[96 + i] = BL3[i];
 
 	free(BL1x);
@@ -330,26 +330,26 @@ void CalculateAL(uint8_t* BL, uint8_t* LHash, big SK, uint8_t* Bl_12, uint m, ui
 }
 big SM2RingSigGen(point G, point* PKs, big SKL, uint8_t* bL, uint8_t** aL, uint8_t* M, uint m, uint L, uint Mlength, uint8_t* Lhash_reulst)
 {
-	/************************************************ÆäËû²ÎÊýÉùÃ÷***********************************************************/
+	/************************************************å…¶ä»–å‚æ•°å£°æ˜Ž***********************************************************/
 	int* Seq, Row;
-	/************************************************ÆäËû²ÎÊýÉùÃ÷***********************************************************/
+	/************************************************å…¶ä»–å‚æ•°å£°æ˜Ž***********************************************************/
 
 
 
-	/************************************************uint8_t ±äÁ¿ÉùÃ÷***********************************************************/
+	/************************************************uint8_t å˜é‡å£°æ˜Ž***********************************************************/
 	uint8_t* Lhash, ** tempaL, ** tempbL, * BL1, * BL2, * Bl_12, * Bl_12forAL;
-	/************************************************uint8_t ±äÁ¿ÉùÃ÷***********************************************************/
+	/************************************************uint8_t å˜é‡å£°æ˜Ž***********************************************************/
 
 
-	/************************************************bigtype ±äÁ¿ÉùÃ÷***********************************************************/
+	/************************************************bigtype å˜é‡å£°æ˜Ž***********************************************************/
 	big KL;
-	/************************************************bigtype ±äÁ¿ÉùÃ÷***********************************************************/
+	/************************************************bigtype å˜é‡å£°æ˜Ž***********************************************************/
 
 
 
 
 
-	/************************************************uint8_t ±äÁ¿ÄÚ´æ·ÖÅä***********************************************************/
+	/************************************************uint8_t å˜é‡å†…å­˜åˆ†é…***********************************************************/
 	Lhash = (uint8_t*)malloc(32 * sizeof(uint8_t));
 	BL1 = (uint8_t*)malloc(64 * sizeof(uint8_t));
 	BL2 = (uint8_t*)malloc(32 * sizeof(uint8_t));
@@ -362,13 +362,13 @@ big SM2RingSigGen(point G, point* PKs, big SKL, uint8_t* bL, uint8_t** aL, uint8
 	tempbL = (uint8_t**)malloc(m * sizeof(uint8_t*));
 	for (int i = 0; i < m; i++)
 		tempbL[i] = (uint8_t*)malloc(128 * sizeof(uint8_t));
-	/************************************************uint8_t ±äÁ¿ÄÚ´æ·ÖÅä***********************************************************/
+	/************************************************uint8_t å˜é‡å†…å­˜åˆ†é…***********************************************************/
 
 
 
-	/************************************************bigtype ±äÁ¿ÄÚ´æ·ÖÅä***********************************************************/
+	/************************************************bigtype å˜é‡å†…å­˜åˆ†é…***********************************************************/
 	KL = mirvar(0);
-	/************************************************bigtype ±äÁ¿ÄÚ´æ·ÖÅä***********************************************************/
+	/************************************************bigtype å˜é‡å†…å­˜åˆ†é…***********************************************************/
 
 
 	
@@ -377,45 +377,45 @@ big SM2RingSigGen(point G, point* PKs, big SKL, uint8_t* bL, uint8_t** aL, uint8
 
 
 
-	/***********************************************³õÊ¼»¯¹ý³Ì***********************************************************/
-	GetSeq(m, L, Seq);//È¡µÃµü´úË³Ðò L+1 --- M ---- L-1
-	GetHashByPKandM(PKs, M, Lhash, m, Mlength);//È¡µÃL=H£¨M||P1||P2||P3......Pi£©
+	/***********************************************åˆå§‹åŒ–è¿‡ç¨‹***********************************************************/
+	GetSeq(m, L, Seq);//å–å¾—è¿­ä»£é¡ºåº L+1 --- M ---- L-1
+	GetHashByPKandM(PKs, M, Lhash, m, Mlength);//å–å¾—L=Hï¼ˆM||P1||P2||P3......Piï¼‰
 
-	for (int i = 0; i < m; i++)//ÓÃ0³õÊ¼»¯aL
+	for (int i = 0; i < m; i++)//ç”¨0åˆå§‹åŒ–aL
 	{
 		for (int j = 0; j < 32; j++)
 			tempaL[i][j] = 0;
 	}
 
-	for (int i = 0; i < m; i++)//ÓÃ0³õÊ¼»¯bL
+	for (int i = 0; i < m; i++)//ç”¨0åˆå§‹åŒ–bL
 	{
 		for (int j = 0; j < 128; j++)
 			tempbL[i][j] = 0;
 	}
-	/***********************************************³õÊ¼»¯¹ý³Ì***********************************************************/
+	/***********************************************åˆå§‹åŒ–è¿‡ç¨‹***********************************************************/
 
 
-	/***********************************************Ëæ»úÉú³ÉaL***********************************************************/
+	/***********************************************éšæœºç”ŸæˆaL***********************************************************/
 	Genai(Seq, m, tempaL);
-	/***********************************************Ëæ»úÉú³ÉaL***********************************************************/
+	/***********************************************éšæœºç”ŸæˆaL***********************************************************/
 
 
 
-	/***********************************************¼ÆËãBL1 BL2***********************************************************/
+	/***********************************************è®¡ç®—BL1 BL2***********************************************************/
 	CalculateBL1_BL2(G, BL1, BL2, KL);
 	for (int i = 0; i < 64; i++)
 		tempbL[L - 1][i] = BL1[i];
 	for (int i = 0; i < 32; i++)
 		tempbL[L - 1][64 + i] = BL2[i];
-	/***********************************************¼ÆËãBL1 BL2***********************************************************/
+	/***********************************************è®¡ç®—BL1 BL2***********************************************************/
 
 
 
-	/***********************************************¼ÆËãB(L+1)-B(m)-B(L-1)***********************************************************/
+	/***********************************************è®¡ç®—B(L+1)-B(m)-B(L-1)***********************************************************/
 	for (int i = 0; i < m - 1; i++)
 	{
 		Row = Seq[i];
-		if (Row == 0)//Èç¹ûRow=0£¬b(i-1)2 Ó¦¸ÃÊÇb(m)2
+		if (Row == 0)//å¦‚æžœRow=0ï¼Œb(i-1)2 åº”è¯¥æ˜¯b(m)2
 		{
 			for (int j = 0; j < 32; j++)
 				Bl_12[j] = tempbL[m - 1][j];
@@ -427,11 +427,11 @@ big SM2RingSigGen(point G, point* PKs, big SKL, uint8_t* bL, uint8_t** aL, uint8
 		}
 		CalculateBi(G, PKs[Row], Bl_12, tempaL[Row], Lhash, tempbL[Row]);
 	}
-	/***********************************************¼ÆËãB(L+1)-B(m)-B(L-1)***********************************************************/
+	/***********************************************è®¡ç®—B(L+1)-B(m)-B(L-1)***********************************************************/
 
 
 
-	/***********************************************¼ÆËãAL***********************************************************/
+	/***********************************************è®¡ç®—AL***********************************************************/
 	if (L - 1 == 0)
 	{
 		for (int i = 0; i < 32; i++)
@@ -443,11 +443,11 @@ big SM2RingSigGen(point G, point* PKs, big SKL, uint8_t* bL, uint8_t** aL, uint8
 			Bl_12forAL[i] = tempbL[L - 2][i];
 	}
 	CalculateAL(tempbL[L - 1], Lhash, SKL, Bl_12forAL, m, L, tempaL);
-	/***********************************************¼ÆËãAL***********************************************************/
+	/***********************************************è®¡ç®—AL***********************************************************/
 
 
 
-	/***********************************************»Ø´«½á¹û***********************************************************/
+	/***********************************************å›žä¼ ç»“æžœ***********************************************************/
 	for (int i = 0; i < m; i++)
 	{
 		for (int j = 0; j < 32; j++)
@@ -459,12 +459,12 @@ big SM2RingSigGen(point G, point* PKs, big SKL, uint8_t* bL, uint8_t** aL, uint8
 
 	for (int i = 0; i < 32; i++)
 		Lhash_reulst[i] = Lhash[i];
-	/***********************************************»Ø´«½á¹û***********************************************************/
+	/***********************************************å›žä¼ ç»“æžœ***********************************************************/
 
 
 
 
-	/***********************************************ÊÍ·ÅÄÚ´æ***********************************************************/
+	/***********************************************é‡Šæ”¾å†…å­˜***********************************************************/
 	free(Seq);
 	for (int i = 0; i < m; i++)
 		free(tempbL[i]);
@@ -477,6 +477,227 @@ big SM2RingSigGen(point G, point* PKs, big SKL, uint8_t* bL, uint8_t** aL, uint8
 	free(Bl_12);
 	free(Bl_12forAL);
 	return KL;
+}
+void checkBZ1(point G, uint8_t* BZ1, big KZ) {
+	point myBZ;
+	myBZ = epoint_init();
+	ecurve_mult(KZ, G, myBZ);
+	big  BZ1X, BZ1Y;
+	BZ1X = mirvar(0);
+	BZ1Y = mirvar(0);
+	epoint_get(myBZ, BZ1X, BZ1Y);
+	uint8_t* bz1x, * bz1y;
+	bz1x = (uint8_t*)malloc(32 * sizeof(uint8_t));
+	bz1y = (uint8_t*)malloc(32 * sizeof(uint8_t));
+	big_to_bytes(32, BZ1X, (char*)bz1x, RightJustify);
+	big_to_bytes(32, BZ1Y, (char*)bz1y, RightJustify);
+	bool ok = 1;
+	for (int i = 0; i < 32; i++)
+		ok*=(BZ1[i] == bz1x[i]);
+	for (int i = 0; i < 32; i++)
+		ok*=(BZ1[32+i] == bz1y[i]);
+	if (ok == 1)
+		printf("BZ1æ­£ç¡®");
+	mirkill(BZ1Y);
+	mirkill(BZ1X);
+	free(bz1x);
+	free(bz1y);
+	epoint_free(myBZ);
+}
+void getnextB(point G, point PK, uint8_t* Bl_12, uint8_t* ai, uint8_t* Lhash, uint8_t* BL,big k)//è¾“å…¥ï¼šPKæ˜¯è¯¥æˆå‘˜çš„å…¬é’¥,è¿™ä¸ªå‡½æ•°è®¡ç®—å•ä¸ªæˆå‘˜çš„å¯†æ–‡
+{//Bl_12å³æ˜¯b(L-1)2,ç”¨äºŽè®¡ç®—bi2ç”¨
+	big  Xi2, Yi2, X, Y;
+	uint8_t* xi2, * yi2, * x, * y, * Xi2andYi2, * ti, * HashoutputChar, * bi2, * bi1, * bi3, * bi3Hashinput;
+	uint32_t* HashoutputU32, * bi3U32;
+	point KiPi, Bi1;
+	Xi2 = mirvar(0);
+	Yi2 = mirvar(0);
+	X = mirvar(0);
+	Y = mirvar(0);
+	bi1 = (uint8_t*)malloc(64 * sizeof(uint8_t));
+	bi2 = (uint8_t*)malloc(32 * sizeof(uint8_t));
+	bi3 = (uint8_t*)malloc(32 * sizeof(uint8_t));
+	bi3Hashinput = (uint8_t*)malloc(128 * sizeof(uint8_t));
+	xi2 = (uint8_t*)malloc(32 * sizeof(uint8_t));
+	yi2 = (uint8_t*)malloc(32 * sizeof(uint8_t));
+	x = (uint8_t*)malloc(32 * sizeof(uint8_t));
+	y = (uint8_t*)malloc(32 * sizeof(uint8_t));
+	HashoutputChar = (uint8_t*)malloc(32 * sizeof(uint8_t));
+	HashoutputU32 = (uint32_t*)malloc(8 * sizeof(uint32_t));
+	bi3U32 = (uint32_t*)malloc(8 * sizeof(uint32_t));
+	Xi2andYi2 = (uint8_t*)malloc(64 * sizeof(uint8_t));
+	ti = (uint8_t*)malloc(32 * sizeof(uint8_t));
+	KiPi = epoint_init();
+	Bi1 = epoint_init();
+	ecurve_mult(k, G, Bi1);
+	epoint_get(Bi1, X, Y);
+	big_to_bytes(32, X, (char*)x, RightJustify);
+	big_to_bytes(32, Y, (char*)y, RightJustify);
+	for (int i = 0; i < 32; i++)
+		bi1[i] = x[i];
+	for (int i = 0; i < 32; i++)
+		bi1[32 + i] = y[i];//å¾—åˆ°bi1
+	ecurve_mult(k, PK, KiPi);
+	epoint_get(KiPi, Xi2, Yi2);
+	big_to_bytes(32, Xi2, (char*)xi2, RightJustify);
+	big_to_bytes(32, Yi2, (char*)yi2, RightJustify);
+	for (int i = 0; i < 32; i++)
+		Xi2andYi2[i] = xi2[i];
+	for (int i = 0; i < 32; i++)
+		Xi2andYi2[32 + i] = yi2[i];
+	KDF(Xi2andYi2, ti, 64);
+	SM3(Bl_12, HashoutputU32, 256);
+	Convert(HashoutputU32, HashoutputChar);//å¾—åˆ°H(b(i-1)2)
+	for (int i = 0; i < 32; i++)//å¾—åˆ°bi2
+		bi2[i] = ai[i] ^ Lhash[i] ^ HashoutputChar[i] ^ ti[i];
+
+	for (int i = 0; i < 32; i++)
+		bi3Hashinput[i] = xi2[i];
+	for (int i = 0; i < 32; i++)
+		bi3Hashinput[32 + i] = Lhash[i];
+	for (int i = 0; i < 32; i++)
+		bi3Hashinput[64 + i] = bi2[i];
+	for (int i = 0; i < 32; i++)
+		bi3Hashinput[96 + i] = yi2[i];
+
+	SM3(bi3Hashinput, bi3U32, 128 * 8);
+	Convert(bi3U32, bi3);
+
+
+	for (int i = 0; i < 64; i++)
+		BL[i] = bi1[i];
+	for (int i = 0; i < 32; i++)
+		BL[64 + i] = bi2[i];
+	for (int i = 0; i < 32; i++)
+		BL[96 + i] = bi3[i];
+
+	free(xi2);
+	free(yi2);
+	free(x);
+	free(y);
+	free(Xi2andYi2);
+	free(ti);
+	free(HashoutputChar);
+	free(bi2);
+	free(bi1);
+	free(bi3);
+	free(bi3Hashinput);
+	free(HashoutputU32);
+	free(bi3U32);
+	mirkill(k);
+	mirkill(Xi2);
+	mirkill(Yi2);
+	mirkill(X);
+	mirkill(Y);
+	epoint_free(KiPi);
+	epoint_free(Bi1);
+}
+void SM2RingSigProof(point G, point* PKs, uint8_t* bL, uint8_t** aL, uint8_t* M, uint m, uint L, uint Mlength, big k)
+{ 
+	/************************************************å…ˆè¯æ˜ŽBZ1åˆæ³•***********************************************************/
+	checkBZ1(G,bL,k);
+	/************************************************å…ˆè¯æ˜ŽBZ1åˆæ³•***********************************************************/
+
+
+	/************************************************å…¶ä»–å‚æ•°å£°æ˜Ž***********************************************************/
+	int* Seq, Row;
+	/************************************************å…¶ä»–å‚æ•°å£°æ˜Ž***********************************************************/
+
+
+	/************************************************uint8_t å˜é‡å£°æ˜Ž***********************************************************/
+	uint8_t* Lhash, ** tempaL, ** tempbL, * BL1, * BL2, * Bl_12;
+	/************************************************uint8_t å˜é‡å£°æ˜Ž***********************************************************/
+
+
+	/************************************************uint8_t å˜é‡å†…å­˜åˆ†é…***********************************************************/
+	Lhash = (uint8_t*)malloc(32 * sizeof(uint8_t));
+	BL1 = (uint8_t*)malloc(64 * sizeof(uint8_t));
+	BL2 = (uint8_t*)malloc(32 * sizeof(uint8_t));
+	Seq = (int*)malloc((m - 1) * sizeof(int));
+	tempaL = (uint8_t**)malloc(m * sizeof(uint8_t*));
+	Bl_12 = (uint8_t*)malloc(32 * sizeof(uint8_t));
+	for (int i = 0; i < m; i++)
+		tempaL[i] = (uint8_t*)malloc(32 * sizeof(uint8_t));
+	tempbL = (uint8_t**)malloc(m * sizeof(uint8_t*));
+	for (int i = 0; i < m; i++)
+		tempbL[i] = (uint8_t*)malloc(128 * sizeof(uint8_t));
+	/************************************************uint8_t å˜é‡å†…å­˜åˆ†é…***********************************************************/
+
+
+	/***********************************************åˆå§‹åŒ–è¿‡ç¨‹***********************************************************/
+	GetSeq(m, L, Seq);//å–å¾—è¿­ä»£é¡ºåº L+1 --- M ---- L-1
+	GetHashByPKandM(PKs, M, Lhash, m, Mlength);//å–å¾—L=Hï¼ˆM||P1||P2||P3......Piï¼‰
+
+	for (int i = 0; i < m; i++)//åˆå§‹åŒ–aL
+	{
+		for (int j = 0; j < 32; j++)
+			tempaL[i][j] = aL[i][j];
+	}
+
+	for (int i = 0; i < m; i++)//åˆå§‹åŒ–bL
+	{
+		for (int j = 0; j < 128; j++)
+			tempbL[i][j] = 0;
+	}
+	for (int i = 0; i < 128; i++)
+		tempbL[L - 1][i] = bL[i];
+
+	/***********************************************åˆå§‹åŒ–è¿‡ç¨‹***********************************************************/
+
+
+
+	/***********************************************è®¡ç®—B(L+1)-B(m)-B(L-1)***********************************************************/
+	for (int i = 0; i < m - 1; i++)
+	{
+		Row = Seq[i];
+		if (Row == 0)//å¦‚æžœRow=0ï¼Œb(i-1)2 åº”è¯¥æ˜¯b(m)2
+		{
+			for (int j = 0; j < 32; j++)
+				Bl_12[j] = tempbL[m - 1][j];
+		}
+		else
+		{
+			for (int j = 0; j < 32; j++)
+				Bl_12[j] = tempbL[Row - 1][j];
+		}
+		getnextB(G, PKs[Row], Bl_12, tempaL[Row], Lhash, tempbL[Row], k);
+	}
+	/***********************************************è®¡ç®—myBL***********************************************************/
+	Row = L - 1;
+	if (Row == 0)//å¦‚æžœRow=0ï¼Œb(i-1)2 åº”è¯¥æ˜¯b(m)2
+	{
+		for (int j = 0; j < 32; j++)
+			Bl_12[j] = tempbL[m - 1][j];
+	}
+	else
+	{
+		for (int j = 0; j < 32; j++)
+			Bl_12[j] = tempbL[Row - 1][j];
+	}
+	getnextB(G, PKs[Row], Bl_12, tempaL[Row], Lhash, tempbL[Row], k);
+
+	bool ok = 1;
+	for (int i = 0; i < 128; i++)
+		ok *= (tempbL[Row][i] == bL[i]);
+	if (ok == 1)
+		printf("BZæ­£ç¡®");
+
+
+
+
+	/***********************************************é‡Šæ”¾å†…å­˜***********************************************************/
+	free(Seq);
+	for (int i = 0; i < m; i++)
+		free(tempbL[i]);
+	free(tempbL);
+	for (int i = 0; i < m; i++)
+		free(tempaL[i]);
+	free(tempaL);
+	free(BL1);
+	free(BL2);
+	free(Bl_12);
+	free(Lhash);
+
 }
 #endif 
 
