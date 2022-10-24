@@ -12,7 +12,9 @@ int main()
     time(&seed);
     irand((unsigned long long)seed);
     mip->IOBASE = HexIOBASAE;
-
+    epoint* HomoC1, * HomoC2; //同态聚合得到的选票
+    HomoC1 = epoint_init();
+    HomoC2 = epoint_init();
 
     int N = 10; //参加投票人数
     voter Voter[10];
@@ -43,9 +45,7 @@ int main()
         if (Voter[i].PorV == 1) {
             Voter[i].Enc();
             //if leader
-            epoint* HomoC1, * HomoC2;
-            HomoC1 = epoint_init();
-            HomoC2 = epoint_init();
+
             //同态聚合所有选票
             HomoEncryption(Voter[0].c1, Voter[0].c1, Voter[1].c2, Voter[1].c2, HomoC1, HomoC2);
             for (int j = 2; j < N; j++) {
@@ -69,5 +69,11 @@ int main()
         /*                        5.RingSign                      */
         /**********************************************************/
 
+        /**********************************************************/
+        /*                        3. SM2解密                       */
+        /**********************************************************/
+        if (Voter[i].PorV == 1) {
+            Voter[i].Dec(HomoC1, HomoC2);
+        }
     }
 }
