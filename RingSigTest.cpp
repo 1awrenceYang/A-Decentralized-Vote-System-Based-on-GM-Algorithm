@@ -52,7 +52,7 @@ int main()
     G = epoint_init();
     epoint_set(g_x, g_y, 1, G);
     
-    //printf("¹«Ô¿¼¯£º\n");
+    //printf("Â¹Â«Ã”Â¿Â¼Â¯Â£Âº\n");
     const int Mlength = 14;
     uint8_t M[Mlength]{ 0x12,0x23,0x18,0x92,0xd9,0xa9,0xdd,0xc9,0x1a,0xdc,0xac,0xbd,0x1d,0xaa };
     const int m = 200;
@@ -82,7 +82,7 @@ int main()
 
     big KL = mirvar(0);
     
-    for (int i = 0; i < 10; i++)//²âÊÔÉú³ÉÊ®´Î
+    for (int i = 0; i < 10; i++)//Â²Ã¢ÃŠÃ”Ã‰ÃºÂ³Ã‰ÃŠÂ®Â´ÃŽ
     {
         KL = SM2RingSigGen(G, PK, sk, BL, ai, M, m, L, Mlength, Lhash);
         printf("BL:\n");
@@ -96,5 +96,6 @@ int main()
         printf("KL:\n");
         cotnum(k, stdout);
         printf("\n\n\n");
+        SM2RingSigProof(G, PK, BL, ai, M, m, L, Mlength, KL);
     }
 }
