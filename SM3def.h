@@ -1,19 +1,19 @@
-#ifndef SM3_DEF_H
+ï»¿#ifndef SM3_DEF_H
 #define SM3_DEF_H
 #include<stdint.h>
-uint32_t IV[8] = { 0x7380166f,0x4914b2b9,0x172442d7,0xda8a0600,0xa96f30bc,0x163138aa,0xe38dee4d,0xb0fb0e4e };//³£Á¿IV
-uint32_t Tj015 = 0x79cc4519;//³£Á¿Tj 0-15µÄÈ¡Öµ
-uint32_t Tj1663 = 0x7a879d8a;//³£Á¿Tj 16-63µÄÈ¡Öµ
-#define FlagForW 1 //µ±×÷ÊÇWºÍW'µÄFlag¼´¿É
+uint32_t IV[8] = { 0x7380166f,0x4914b2b9,0x172442d7,0xda8a0600,0xa96f30bc,0x163138aa,0xe38dee4d,0xb0fb0e4e };//å¸¸é‡IV1
+uint32_t Tj015 = 0x79cc4519;//å¸¸é‡Tj 0-15çš„å–å€¼
+uint32_t Tj1663 = 0x7a879d8a;//å¸¸é‡Tj 16-63çš„å–å€¼
+#define FlagForW 1 //å½“ä½œæ˜¯Wå’ŒW'çš„Flagå³å¯
 #define FlagForW1 0
-#define FFj015(x,y,z) x^y^z//FFjº¯Êı0-15
-#define FFj1663(x,y,z) (x&y)|(x&z)|(y&z)//FFjº¯Êı16-63
-#define GGj015(x,y,z) x^y^z//GGjº¯Êı0-15
-#define GGj1663(x,y,z) (x&y)|(~x&z)//GGjº¯Êı1663
-#define P0(x) x^((x<<9)|(x>>23))^((x<<17)|(x>>15))//P0º¯Êı
-#define P1(x) x^((x<<15)|(x>>17))^((x<<23)|(x>>9))//P1º¯Êı
-#define MERAGE4(one,two,three,four)	(((uint32_t)one << 24) | ((uint32_t)two << 16) | ((uint16_t)three << 8) | four)//ËÄ¸öuint8ºÏ²¢³ÉÒ»¸öuint32
-#define round_shift_left(x,n) x<<n|x>>32-n//Ïò×óÑ­»·ÒÆÎ»
-unsigned long long MODNUM = 4294967296;//2µÄ32´Î·½
+#define FFj015(x,y,z) x^y^z//FFjå‡½æ•°0-15
+#define FFj1663(x,y,z) (x&y)|(x&z)|(y&z)//FFjå‡½æ•°16-63
+#define GGj015(x,y,z) x^y^z//GGjå‡½æ•°0-15
+#define GGj1663(x,y,z) (x&y)|(~x&z)//GGjå‡½æ•°1663
+#define P0(x) x^((x<<9)|(x>>23))^((x<<17)|(x>>15))//P0å‡½æ•°
+#define P1(x) x^((x<<15)|(x>>17))^((x<<23)|(x>>9))//P1å‡½æ•°
+#define MERAGE4(one,two,three,four)	(((uint32_t)one << 24) | ((uint32_t)two << 16) | ((uint16_t)three << 8) | four)//å››ä¸ªuint8åˆå¹¶æˆä¸€ä¸ªuint32
+#define round_shift_left(x,n) x<<n|x>>32-n//å‘å·¦å¾ªç¯ç§»ä½
+unsigned long long MODNUM = 4294967296;//2çš„32æ¬¡æ–¹
 #endif
 
