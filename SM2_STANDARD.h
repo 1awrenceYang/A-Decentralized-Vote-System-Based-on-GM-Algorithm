@@ -11,7 +11,7 @@ extern "C"
 #include<cstdlib>
 #include <cstdint>
 #include"SM3acl.h"
-void LittleEnd2BigEnd(uint32_t input,uint8_t *output)
+void LittleEnd2BigEnd(uint32_t input, uint8_t* output)
 {
 	uint8_t t1, t2, t3, t4;
 	t1 = input & 0x000000ff;
@@ -21,7 +21,7 @@ void LittleEnd2BigEnd(uint32_t input,uint8_t *output)
 	output[0] = t1;
 	output[1] = t2;
 	output[2] = t3;
-	output[3]=t4;
+	output[3] = t4;
 }
 void ConnectLength(uint8_t* Input, uint8_t* Output, unsigned int Length, unsigned int ConnectValue)//Length是字节长度，ConnectValue是整数
 {
@@ -43,7 +43,7 @@ void ConnectLength(uint8_t* Input, uint8_t* Output, unsigned int Length, unsigne
 	}//得到ConnectValue的二进制表示
 	for (int i = 0; i < 32; i = i + 8)
 	{
-		value= 128 * bin[i] + 64 * bin[i + 1] + 32 * bin[i + 2] + 16 * bin[i + 3] + 8 * bin[i + 4] + 4 * bin[i + 5] + 2 * bin[i + 6] + bin[i + 7];
+		value = 128 * bin[i] + 64 * bin[i + 1] + 32 * bin[i + 2] + 16 * bin[i + 3] + 8 * bin[i + 4] + 4 * bin[i + 5] + 2 * bin[i + 6] + bin[i + 7];
 		temp[Length + i / 8] = value;
 	}
 	for (int i = 0; i < Length + 4; i++)
@@ -85,8 +85,8 @@ void KDF(uint8_t* Z, uint8_t* K, int lenZ, unsigned int klen = 256)
 		K[ByteNum + i] = ptr[ByteNum + (3 - i)];
 		//printf("%02X", K[ByteNum + i]);
 	}
-	
-	
+
+
 }
 void Point2BitString(epoint* point, uint8_t* Output)
 {
@@ -111,13 +111,13 @@ void Point2BitString(epoint* point, uint8_t* Output)
 	free(Y);
 	free(temp);
 }
-void SM2Encryption(epoint* G, epoint * Pk , uint8_t* M, unsigned int Length,uint8_t *Ciphertext)//输入明文串M，明文bit长度Length
+void SM2Encryption(epoint* G, epoint* Pk, uint8_t* M, unsigned int Length, uint8_t* Ciphertext)//输入明文串M，明文bit长度Length
 {
 	big k, h, X2, Y2;
 	epoint* C1, * hPK, * kPK;
 	uint8_t* C1BitString, * X2cordinateInput, * Y2cordinateInput, * X2cordinateOutput, * Y2cordinateOutput,
 		* x2, * y2, * X2andY2, * C2, * ptr, * t, * HashInput, * C, * u8C3;
-	uint32_t * C3;
+	uint32_t* C3;
 	int n;
 	n = 0;
 	if (Length % 256 == 0)
@@ -152,7 +152,7 @@ void SM2Encryption(epoint* G, epoint * Pk , uint8_t* M, unsigned int Length,uint
 	ecurve_mult(k, G, C1);
 	Point2BitString(C1, C1BitString);
 	//----------------------------------------------A2阶段-----------------------------------------------------------
-	
+
 	//----------------------------------------------A3阶段-----------------------------------------------------------check
 	ecurve_mult(h, Pk, hPK);
 	if (point_at_infinity(hPK))
@@ -161,13 +161,13 @@ void SM2Encryption(epoint* G, epoint * Pk , uint8_t* M, unsigned int Length,uint
 		return;
 	}
 	//----------------------------------------------A3阶段-----------------------------------------------------------
-	
+
 
 	//----------------------------------------------A4阶段-----------------------------------------------------------check
 	ecurve_mult(k, Pk, kPK);
 	//epoint_print(kPK);
 	//----------------------------------------------A4阶段-----------------------------------------------------------
-	
+
 	//----------------------------------------------A5阶段-----------------------------------------------------------
 	epoint_get(kPK, X2, Y2);
 	big_to_bytes(32, X2, (char*)x2, RightJustify);
@@ -182,11 +182,11 @@ void SM2Encryption(epoint* G, epoint * Pk , uint8_t* M, unsigned int Length,uint
 		printf("%02X", t[i]);
 	}*/
 	//----------------------------------------------A5阶段-----------------------------------------------------------
-	
+
 
 	//----------------------------------------------A6阶段-----------------------------------------------------------
 	//ptr = (uint8_t*)t;
-	for (int i = 0; i < Length/8; i++)
+	for (int i = 0; i < Length / 8; i++)
 	{
 		C2[i] = M[i] ^ t[i];
 	}
@@ -198,12 +198,12 @@ void SM2Encryption(epoint* G, epoint * Pk , uint8_t* M, unsigned int Length,uint
 		HashInput[32 + i] = M[i];
 	for (int i = 0; i < 32; i++)
 		HashInput[32 + (Length / 8) + i] = y2[i];
-	
+
 	SM3(HashInput, C3, (64 + Length / 8) * 8);
-	
+
 
 	//----------------------------------------------A7阶段-----------------------------------------------------------
-	
+
 	//----------------------------------------------A8阶段-----------------------------------------------------------
 	uint8_t* C3ptr = (uint8_t*)C3;
 	for (int i = 0; i < 32; i = i + 4)
@@ -223,8 +223,8 @@ void SM2Encryption(epoint* G, epoint * Pk , uint8_t* M, unsigned int Length,uint
 	for (int i = 0; i < (65 + 32 + Length / 8); i++)
 		Ciphertext[i] = C[i];
 	//----------------------------------------------A8阶段-----------------------------------------------------------
-	
-	
+
+
 	//---------------------------------------------释放内存---------------------------------------------------------
 	free(C1BitString);
 	free(t);
@@ -348,7 +348,7 @@ void SM2Decryption(epoint* G, big Sk, uint8_t* Ciphertext, unsigned int Length, 
 	for (int i = 0; i < 32; i++)
 		X2andY2[i + 32] = y2[i];
 	KDF(X2andY2, t, 64, PlaintextLength);
-	
+
 	//--------------------------------------------------B4阶段------------------------------------------------------
 
 
@@ -366,14 +366,14 @@ void SM2Decryption(epoint* G, big Sk, uint8_t* Ciphertext, unsigned int Length, 
 		tempM[i] = C2[i] ^ t[i];
 	/*for (int i = 0; i < PlaintextLength / 8; i++)
 		printf("%02X", tempM[i]);*/
-	
-	//--------------------------------------------------B5阶段------------------------------------------------------
+
+		//--------------------------------------------------B5阶段------------------------------------------------------
 
 
 
 
-	//--------------------------------------------------B6阶段------------------------------------------------------check
-	//memset(HashInput, 0, 64 + PlaintextLength / 8);
+		//--------------------------------------------------B6阶段------------------------------------------------------check
+		//memset(HashInput, 0, 64 + PlaintextLength / 8);
 	for (int i = 0; i < 32; i++)
 		HashInput[i] = x2[i];
 	for (int i = 0; i < PlaintextLength / 8; i++)
@@ -426,5 +426,3 @@ void SM2Decryption(epoint* G, big Sk, uint8_t* Ciphertext, unsigned int Length, 
 	//--------------------------------------------------内存释放------------------------------------------------------
 }
 #endif
-
-

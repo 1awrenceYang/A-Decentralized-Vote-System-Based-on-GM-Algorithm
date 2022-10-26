@@ -1,17 +1,15 @@
+#ifndef SM2_H
+#define SM2_H
 extern "C"
 {
 #include<stdio.h>
 #include"miracl.h"
 #include<time.h>
 }
-#include<iostream>
 #include"SM2_Param.h"
-#include"sm3.h"
-#include"include/spdlog/spdlog.h"
-#include "include/spdlog/sinks/basic_file_sink.h"
-#include "include/spdlog/sinks/rotating_file_sink.h"
+#include"SM3acl.h"
 #include<time.h>
-using namespace spdlog;
+
 /*****************************************Parameters decleration*****************************************/
 #define VotePass 1
 #define VoteNotPass 0
@@ -27,7 +25,7 @@ using namespace spdlog;
 #define HashValueError 5
 #define HomoDecryptionError 6
 #define MaxVoteNum 100
-auto RuntimeLogger = spdlog::basic_logger_mt("basic_logger", "logs/RunTimeLog.txt");
+
 typedef uint8_t u8;
 /*****************************************Parameters decleration*****************************************/
 void PrintErrorMessage(int Error)
@@ -67,7 +65,7 @@ bool CheckCurvePointInfinite(epoint* pk)//check if the public key is valid
     bool Flag2 = 0;
     if (pk == NULL)
     {
-        RuntimeLogger->error("Point Infinite!");
+        
         throw PointInfinite;
     }
     else
@@ -122,10 +120,9 @@ void print_hash(uint32_t *HashOutput)
     }
     printf("\n");
 }
-void Encryption(int m, epoint* pk,epoint *G,epoint *OutC1,epoint*OutC2,uint32_t *OutC3)//åŠ å¯†å‰ï¼Œä¸€å®šè¦è¦è®¾ç½®Active Curve
+void Encryption(int m, epoint* pk,epoint *G,epoint *OutC1,epoint*OutC2,uint32_t *OutC3)//¼ÓÃÜÇ°£¬Ò»¶¨ÒªÒªÉèÖÃActive Curve
 {
-    RuntimeLogger->info("Encryption Start");
-    RuntimeLogger->info("Public Key Validity Check");
+    
     try
     {
         bool PkValid = CheckCurvePointInfinite(pk);
@@ -153,7 +150,7 @@ void Encryption(int m, epoint* pk,epoint *G,epoint *OutC1,epoint*OutC2,uint32_t 
     ToxicWaste = epoint_init();
     //epoint_set()
     ecurve_mult(h, S, S);
-    RuntimeLogger->info("Public Key Validity Check Pass,encryption parameters init succeed!");
+    
     try
     {
         bool S_valid = CheckCurvePointInfinite(S);
@@ -162,20 +159,22 @@ void Encryption(int m, epoint* pk,epoint *G,epoint *OutC1,epoint*OutC2,uint32_t 
     {
         PrintErrorMessage(error);
     }
-    epoint_free(S);//epointåœ¨heapä¸Šåˆ†é…ç©ºé—´ï¼ŒåºŸå¼ƒå‚æ•°è¯·ç«‹å³é”€æ¯
+    epoint_free(S);//epointÔÚheapÉÏ·ÖÅä¿Õ¼ä£¬·ÏÆú²ÎÊıÇëÁ¢¼´Ïú»Ù
 
-    RuntimeLogger->info("Start C1 calculatioin");
-    /*********************************C1å¯†æ–‡è®¡ç®—**************************************************/
-    bigbits(256, k);//ç”Ÿæˆéšæœºæ•°K
+   
+    /*********************************C1ÃÜÎÄ¼ÆËã**************************************************/
+    bigbits(256, k);//Éú³ÉËæ»úÊıK
     char* temp = (char*)malloc(32 * sizeof(char));
     big_to_bytes(32, k, temp, RightJustify);
     //big_to_bytes()
-    ecurve_mult(k, G, c1);//è®¡ç®—å¯†æ–‡c1=k*G
+    ecurve_mult(k, G, c1);//¼ÆËãÃÜÎÄc1=k*G
     //epoint_print(c1);
     //epoint_print(c1);
-    /*********************************C1å¯†æ–‡è®¡ç®—**************************************************/
-    RuntimeLogger->info("C1 calculation complete");
-    ecurve_mult(k, pk, X2Y2);//è®¡ç®—ç‚¹(X2,Y2)=k*pk
+    /*********************************C1ÃÜÎÄ¼ÆËã**************************************************/
+    //cotnum(k, stdout);
+    //epoint_print(pk);
+    ecurve_mult(k, pk, X2Y2);//¼ÆËãµã(X2,Y2)=k*pk
+    //epoint_print(X2Y2);
     //epoint_print(X2Y2);
     epoint_get(X2Y2, x2, y2);
     big_to_bytes(32, x2, (char*)X2, RightJustify);
@@ -183,12 +182,13 @@ void Encryption(int m, epoint* pk,epoint *G,epoint *OutC1,epoint*OutC2,uint32_t 
     //epoint_print(X2Y2);
     epoint_copy(X2Y2, ToxicWaste);
     //epoint_print(X2Y2);
-    RuntimeLogger->info("Start C2 calculatioin");
-    /*********************************C2å¯†æ–‡è®¡ç®—**************************************************/
+    
+    /*********************************C2ÃÜÎÄ¼ÆËã**************************************************/
     if (m == 0)
     {
-        ecurve_add(G, ToxicWaste);//ToxicWasteçš„å€¼å°±æ˜¯X2Y2çš„å€¼ï¼Œè¿™æ ·åšæ˜¯ä¸ºäº†é˜²èŒƒä¾§ä¿¡é“æ”»å‡»,ä¿è¯è®¡ç®—é‡ä¸€è‡´
+        ecurve_add(G, ToxicWaste);//ToxicWasteµÄÖµ¾ÍÊÇX2Y2µÄÖµ£¬ÕâÑù×öÊÇÎªÁË·À·¶²àĞÅµÀ¹¥»÷,±£Ö¤¼ÆËãÁ¿Ò»ÖÂ
         epoint_copy(X2Y2, c2);
+       // epoint_print(X2Y2);
     }
     else if (m == 1)
     {
@@ -196,11 +196,11 @@ void Encryption(int m, epoint* pk,epoint *G,epoint *OutC1,epoint*OutC2,uint32_t 
         epoint_copy(X2Y2, c2);
     }
     //epoint_print(c2);
-    /*********************************C2å¯†æ–‡è®¡ç®—**************************************************/
-    RuntimeLogger->info("C2 calculation complete");
+    /*********************************C2ÃÜÎÄ¼ÆËã**************************************************/
+    
     epoint_free(ToxicWaste);
-    RuntimeLogger->info("Start C3 calculatioin");
-    /*********************************C3å¯†æ–‡è®¡ç®—**************************************************/
+    
+    /*********************************C3ÃÜÎÄ¼ÆËã**************************************************/
     for (int i = 0; i < 32; i++)
         HashInput[i] = X2[i];
     HashInput[32] = 1;
@@ -211,21 +211,22 @@ void Encryption(int m, epoint* pk,epoint *G,epoint *OutC1,epoint*OutC2,uint32_t 
         printf("%x", HashInput[i]);
     }*/
     printf("\n");
-    Sm3_1024(HashInput, 520);
+    //Sm3_1024(HashInput, 520);
+    SM3(HashInput, OutC3, 520);
     //print_hash(SM3_hash_result);
-    for (int i = 0; i < 8; i++)
-        OutC3[i] = SM3_hash_result[i];
-    /*********************************C3å¯†æ–‡è®¡ç®—**************************************************/
-    RuntimeLogger->info("C3 calculation complete");
-    /*********************************è¿”å›ç»“æœ**************************************************/
+    /*for (int i = 0; i < 8; i++)
+        OutC3[i] = SM3_hash_result[i];*/
+    /*********************************C3ÃÜÎÄ¼ÆËã**************************************************/
+
+    /*********************************·µ»Ø½á¹û**************************************************/
     epoint_copy(c1, OutC1);
     epoint_copy(c2, OutC2);
-    RuntimeLogger->info("Result Returned");
-    /*********************************é‡Šæ”¾ç©ºé—´**************************************************/
+
+    /*********************************ÊÍ·Å¿Õ¼ä**************************************************/
     epoint_free(c1);
     epoint_free(c2);
     epoint_free(X2Y2);
-    RuntimeLogger->info("Heap Space Free Complete");
+
 }
 int Decryption(epoint* c1, epoint* c2,epoint*G, uint32_t* c3, big sk)
 {
@@ -235,10 +236,11 @@ int Decryption(epoint* c1, epoint* c2,epoint*G, uint32_t* c3, big sk)
     epoint_print(c2);
     printf("C3 ciphertext:\n");
     print_hash(c3);
-    //FIXME---åŠ å…¥æ—¥å¿—ä»¥åŠå†…å­˜é‡Šæ”¾ï¼ï¼ï¼ï¼ï¼ï¼ï¼ï¼
+    //FIXME---¼ÓÈëÈÕÖ¾ÒÔ¼°ÄÚ´æÊÍ·Å£¡£¡£¡£¡£¡£¡£¡£¡
     big x2, y2;
     u8* X2, * Y2, * HashInput;
     uint32_t* u = (uint32_t*)malloc(8 * sizeof(uint32_t));
+    uint32_t* SM3_hash_result = (uint32_t*)malloc(8 * sizeof(uint32_t));
     X2 = (u8*)malloc(32 * sizeof(u8));
     Y2 = (u8*)malloc(32 * sizeof(u8));
     HashInput = (u8*)malloc(65 * sizeof(u8));
@@ -246,7 +248,7 @@ int Decryption(epoint* c1, epoint* c2,epoint*G, uint32_t* c3, big sk)
     y2 = mirvar(0);
     if (point_at_infinity(c1) || point_at_infinity(c2))
     {
-        RuntimeLogger->error("C1 or C2 is at infinity");
+
         return -1;
     }
     big x = mirvar(0);
@@ -254,7 +256,7 @@ int Decryption(epoint* c1, epoint* c2,epoint*G, uint32_t* c3, big sk)
     epoint_get(c1, x, y);
     if (!epoint_x(x))
     {
-        RuntimeLogger->error("C1 is not on the curve");
+
         throw PointNotOnCurve;
         return -1;
     }
@@ -288,28 +290,28 @@ int Decryption(epoint* c1, epoint* c2,epoint*G, uint32_t* c3, big sk)
             HashInput[i] = Y2[i - 33];
         }
         
-        Sm3_1024(HashInput, 520);
-        
+        //Sm3_1024(HashInput, 520);
+        SM3(HashInput, SM3_hash_result, 520);
         for (int i = 0; i < 8; i++)
         {
             if (SM3_hash_result[i] != c3[i])
             {
                 printf("%x %x\n", SM3_hash_result[i],c3[i]);
-                RuntimeLogger->error("Decryption failed for hash value error");
+
                 throw HashValueError;
             }
         }
         return 1;
-        RuntimeLogger->info("Decryption Complete");
+        
     }
-    RuntimeLogger->error("Decryption Bad Parameters");
+    
     throw DecryptionFail;
 }
 void HomoEncryption(epoint* c1, epoint* c11, epoint* c2, epoint* c22,epoint*OutC1,epoint*OutC2)
 {
     if (point_at_infinity(c1) || point_at_infinity(c11), point_at_infinity(c2) || point_at_infinity(c22))
     {
-        RuntimeLogger->error("Homo Encryption failed for point infinity");
+       
         throw PointInfinite;
     }
     big x1, x2, x3, x4, y1, y2, y3, y4;
@@ -327,30 +329,37 @@ void HomoEncryption(epoint* c1, epoint* c11, epoint* c2, epoint* c22,epoint*OutC
     epoint_get(c22, x4, y4);
     if (!epoint_x(x1) || !epoint_x(x2) || !epoint_x(x3) || !epoint_x(x4))
     {
-        RuntimeLogger->error("Homo Encryption failed for point not on curve");
+        
         throw PointNotOnCurve;
     }
-    RuntimeLogger->info("Homo Encryption start");
+   
     epoint* temp1, * temp2;
     temp1 = epoint_init();
     temp2 = epoint_init();
-    epoint_copy(c11, temp1);//å­˜ä¸‹åŸæ¥çš„å¯†æ–‡å€¼
+    epoint_copy(c11, temp1);//´æÏÂÔ­À´µÄÃÜÎÄÖµ
     epoint_copy(c22, temp2);
     ecurve_add(c1, c11);
     ecurve_add(c2, c22);
-    RuntimeLogger->info("Homo Encryption complete");
     epoint_copy(c11, OutC1);
     epoint_copy(c22, OutC2);
     epoint_copy(temp1, c11);
     epoint_copy(temp2, c22);
     epoint_free(temp1);
     epoint_free(temp2);
+    mirkill(x1);
+    mirkill(x2);
+    mirkill(x3);
+    mirkill(x4);
+    mirkill(y1);
+    mirkill(y2);
+    mirkill(y3);
+    mirkill(y4);
 }
 void HomoDecryption(epoint* c1, epoint* c2, epoint* G , big sk , int *m)
 {
     if (point_at_infinity(c1) || point_at_infinity(c2))
     {
-        RuntimeLogger->error("Homo Decryption failed for point infinity");
+
         throw PointInfinite;
     }
     big x1, x2, y1, y2, r;
@@ -367,10 +376,10 @@ void HomoDecryption(epoint* c1, epoint* c2, epoint* G , big sk , int *m)
     epoint_get(c2, x2, y2);
     if (!epoint_x(x1) || !epoint_x(x2))
     {
-        RuntimeLogger->error("Homo Decryption failed for point not on curve");
+
         throw PointNotOnCurve;
     }
-    RuntimeLogger->info("Homo Decryption start");
+
     epoint_copy(c2, tempC2);
     ecurve_mult(sk, c1, temp);
     ecurve_sub(temp, c2);//now c2=mG
@@ -386,17 +395,17 @@ void HomoDecryption(epoint* c1, epoint* c2, epoint* G , big sk , int *m)
         epoint_print(BSGS);*/
         if (epoint_comp(BSGS, mG))
         {
-            RuntimeLogger->info("Homo Decryption complete");
+
             *m = i;
             return;
         }
     }
-    RuntimeLogger->error("Homo Decryption error for unknown reason");
+
     throw HomoDecryptionError;
 }
-big* GenPolyParam(int t)//ç”Ÿæˆä¸€ä¸ªå¤šé¡¹å¼çš„éšæœºå‚æ•°
+big* GenPolyParam(int t)//Éú³ÉÒ»¸ö¶àÏîÊ½µÄËæ»ú²ÎÊı
 {
-    big* aij = (big*)malloc(t * sizeof(big));//aijå£°æ˜ä¸åˆå§‹åŒ–,
+    big* aij = (big*)malloc(t * sizeof(big));//aijÉùÃ÷Óë³õÊ¼»¯,
     for (int i = 0; i < t; i++)
     {
         aij[i] = mirvar(0);
@@ -405,9 +414,9 @@ big* GenPolyParam(int t)//ç”Ÿæˆä¸€ä¸ªå¤šé¡¹å¼çš„éšæœºå‚æ•°
     {
         bigbits(255, aij[i]);
     }
-    return aij;//è§„å®šä»å·¦è‡³å³åˆ†åˆ«ä¸ºa0,a1,a2,a3.....ä»å¸¸æ•°é¡¹å¼€å§‹ï¼Œä¸€æ¬¡é¡¹ç³»æ•°ï¼ŒäºŒæ¬¡é¡¹ç³»æ•°......
+    return aij;//¹æ¶¨´Ó×óÖÁÓÒ·Ö±ğÎªa0,a1,a2,a3.....´Ó³£ÊıÏî¿ªÊ¼£¬Ò»´ÎÏîÏµÊı£¬¶ş´ÎÏîÏµÊı......
 }
-big Expoent(int n, big a)//è®¡ç®—açš„næ¬¡æ–¹,æ³¨æ„è¿™äº›aä¸å¯ä»¥æ˜¯å¤§æ•°ï¼Œåªèƒ½æ˜¯æŠ•ç¥¨äººæ•°ä¹‹ç±»çš„å°æ•°
+big Expoent(int n, big a)//¼ÆËãaµÄn´Î·½,×¢ÒâÕâĞ©a²»¿ÉÒÔÊÇ´óÊı£¬Ö»ÄÜÊÇÍ¶Æ±ÈËÊıÖ®ÀàµÄĞ¡Êı
 {
     big result = mirvar(1);
     for (int i = 0; i < n; i++)
@@ -416,7 +425,7 @@ big Expoent(int n, big a)//è®¡ç®—açš„næ¬¡æ–¹,æ³¨æ„è¿™äº›aä¸å¯ä»¥æ˜¯å¤§æ•°ï¼Œå
     }
     return result;
 }
-big GenYij(int t,int j,big *aij)//è®¡ç®—ä¸€ä¸ªç»™å®šç³»æ•°aijï¼Œå’Œç»™å®šè¾“å…¥jçš„å¤šé¡¹å¼çš„è¾“å‡º
+big GenYij(int t,int j,big *aij)//¼ÆËãÒ»¸ö¸ø¶¨ÏµÊıaij£¬ºÍ¸ø¶¨ÊäÈëjµÄ¶àÏîÊ½µÄÊä³ö
 {
     big fj = mirvar(0);
     big p = mirvar(1);
@@ -434,8 +443,10 @@ big GenYij(int t,int j,big *aij)//è®¡ç®—ä¸€ä¸ªç»™å®šç³»æ•°aijï¼Œå’Œç»™å®šè¾“å…¥j
         }
     }
     return fj;
+    mirkill(p);
+    mirkill(temp);
 }
-big* CalFij(int n, int t, big* aij)//è®¡ç®—ä¸€ä¸ªç»™å®šç³»æ•°aijï¼Œçš„jä¸ªå‚æ•°çš„æ•°ç»„
+big* CalFij(int n, int t, big* aij)//¼ÆËãÒ»¸ö¸ø¶¨ÏµÊıaij£¬µÄj¸ö²ÎÊıµÄÊı×é
 {
     big* ui = (big*)malloc(n * sizeof(big));
     big temp = mirvar(0);
@@ -445,8 +456,9 @@ big* CalFij(int n, int t, big* aij)//è®¡ç®—ä¸€ä¸ªç»™å®šç³»æ•°aijï¼Œçš„jä¸ªå‚æ•°
         ui[i] = temp;
     }
     return ui;
+    mirkill(temp);
 }
-big* CalSecretShareGiven(int n, int t, big** aij)//è®¡ç®—ç»™å®šäº†ç®—å‡ºçš„yijäºŒç»´æ•°ç»„ï¼Œç®—å‡ºæ¯ä¸€ä¸ªUjæ”¶åˆ°çš„Yijçš„å’Œï¼Œä¹Ÿå°±æ˜¯å¾—å‡ºç§˜å¯†ä»½é¢Yj
+big* CalSecretShareGiven(int n, int t, big** aij)//¼ÆËã¸ø¶¨ÁËËã³öµÄyij¶şÎ¬Êı×é£¬Ëã³öÃ¿Ò»¸öUjÊÕµ½µÄYijµÄºÍ£¬Ò²¾ÍÊÇµÃ³öÃØÃÜ·İ¶îYj
 {
     big q = mirvar(0);
     big temp = mirvar(0);
@@ -454,7 +466,7 @@ big* CalSecretShareGiven(int n, int t, big** aij)//è®¡ç®—ç»™å®šäº†ç®—å‡ºçš„yijäº
     big* result = (big*)malloc(n * sizeof(big));
     for (int i = 0; i < n; i++)
         result[i] = mirvar(0);
-    for (int i = 0; i < n; i++)//å¯¹çŸ©é˜µçš„æ¯ä¸€åˆ—æ±‚å’Œï¼Œé‡‡ç”¨è¡Œä¼˜å…ˆæ–¹æ³•ï¼Œé˜²æ­¢äººæ•°è¿‡å¤šæ—¶æ€§èƒ½ä¸‹é™
+    for (int i = 0; i < n; i++)//¶Ô¾ØÕóµÄÃ¿Ò»ÁĞÇóºÍ£¬²ÉÓÃĞĞÓÅÏÈ·½·¨£¬·ÀÖ¹ÈËÊı¹ı¶àÊ±ĞÔÄÜÏÂ½µ
     {
         for (int j = 0; j < n; j++)
         {
@@ -467,8 +479,10 @@ big* CalSecretShareGiven(int n, int t, big** aij)//è®¡ç®—ç»™å®šäº†ç®—å‡ºçš„yijäº
 
     }
     return result;
+    mirkill(q);
+    mirkill(temp);
 }
-big CalNumerator(int r,int t)//ç»™å®šä¸€ä¸ªrï¼Œç»™å®šä¸€ä¸ªtï¼Œè®¡ç®—deltaå‡½æ•°çš„åˆ†å­éƒ¨åˆ†
+big CalNumerator(int r,int t)//¸ø¶¨Ò»¸ör£¬¸ø¶¨Ò»¸öt£¬¼ÆËãdeltaº¯ÊıµÄ·Ö×Ó²¿·Ö
 {
     big acc = mirvar(1);
     big j = mirvar(0);
@@ -480,9 +494,10 @@ big CalNumerator(int r,int t)//ç»™å®šä¸€ä¸ªrï¼Œç»™å®šä¸€ä¸ªtï¼Œè®¡ç®—deltaå‡½æ•°
         negify(j, j);
         multiply(acc, j, acc);
     }
+    mirkill(j);
     return acc;
 }
-big CalDominator(int r, int t)//ç»™å®šä¸€ä¸ªrï¼Œç»™å®šä¸€ä¸ªtï¼Œè®¡ç®—deltaå‡½æ•°çš„åˆ†æ¯éƒ¨åˆ†
+big CalDominator(int r, int t)//¸ø¶¨Ò»¸ör£¬¸ø¶¨Ò»¸öt£¬¼ÆËãdeltaº¯ÊıµÄ·ÖÄ¸²¿·Ö
 {
     big acc = mirvar(1);
     big temp = mirvar(0);
@@ -496,9 +511,12 @@ big CalDominator(int r, int t)//ç»™å®šä¸€ä¸ªrï¼Œç»™å®šä¸€ä¸ªtï¼Œè®¡ç®—deltaå‡½æ•
         subtract(r_big, j, temp);//temp=r-j
         multiply(acc, temp, acc);
     }
+    mirkill(temp);
+    mirkill(r_big);
+    mirkill(j);
     return acc;
 }
-big SecretShareSk(big *Yr,int t,big q)//ç”¨ç»™å®šçš„SecretShare Yrè®¡ç®—ç§˜å¯†å€¼sk
+big SecretShareSk(big *Yr,int t,big q)//ÓÃ¸ø¶¨µÄSecretShare Yr¼ÆËãÃØÃÜÖµsk
 {
     big acc = mirvar(0);
     big NumAcc = mirvar(1);
@@ -511,13 +529,17 @@ big SecretShareSk(big *Yr,int t,big q)//ç”¨ç»™å®šçš„SecretShare Yrè®¡ç®—ç§˜å¯†å€
         Dominator = CalDominator(i, t);
         multiply(Numerator, Yr[i - 1], NumAcc);
         divide(NumAcc, Dominator, temp);
-        divide(temp, q, q);//æ¨¡q
+        divide(temp, q, q);//Ä£q
         add(acc, temp, acc);
         temp = mirvar(0);
     }
+    mirkill(NumAcc);
+    mirkill(Numerator);
+    mirkill(temp);
+    mirkill(Dominator);
     return acc;
 }
-epoint* SecretSharePk(big* Yr,big q, int t, epoint* G)//ç”¨ç»™å®šçš„SecretShare Yrè®¡ç®—å…¬é’¥ï¼Œè€Œä¸æ³„éœ²ç§é’¥
+epoint* SecretSharePk(big* Yr,big q, int t, epoint* G)//ÓÃ¸ø¶¨µÄSecretShare Yr¼ÆËã¹«Ô¿£¬¶ø²»Ğ¹Â¶Ë½Ô¿
 {
     epoint* SharePk = epoint_init();
     epoint* PkAcc = epoint_init();
@@ -532,45 +554,68 @@ epoint* SecretSharePk(big* Yr,big q, int t, epoint* G)//ç”¨ç»™å®šçš„SecretShare 
         Dominator = CalDominator(i, t);
         multiply(Numerator, Yr[i - 1], NumAcc);
         divide(NumAcc, Dominator, temp);
-        divide(temp, q, q);//æ¨¡q
+        divide(temp, q, q);//Ä£q
         ecurve_mult(temp, G, SharePk);
         ecurve_add(SharePk, PkAcc);
         temp = mirvar(0);
     }
+    mirkill(NumAcc);
+    mirkill(Numerator);
+    mirkill(temp);
+    mirkill(Dominator);
+    epoint_free(SharePk);
     return PkAcc;
 }
-big* GenPkbySecretShare(int n, int t, epoint*G,epoint *PkOut,big q)//è¾“å…¥æ€»äººæ•°ï¼Œå‚ä¸ç§˜å¯†åˆ†äº«çš„äººæ•°ï¼Œç”Ÿæˆå…ƒGï¼Œè¾“å‡ºä¸€ä¸ªå…¬é’¥ï¼Œä»¥åŠéšæœºæ•°å‚æ•°ï¼Œç”¨äºè§£å¯†æ—¶ç”Ÿæˆsk*C1
+big* GenPkbySecretShare(int n, int t, epoint*G,epoint *PkOut,big q)//ÊäÈë×ÜÈËÊı£¬²ÎÓëÃØÃÜ·ÖÏíµÄÈËÊı£¬Éú³ÉÔªG£¬Êä³öÒ»¸ö¹«Ô¿£¬ÒÔ¼°ÃØÃÜ·ÖÏí²ÎÊı£¬ÓÃÓÚ½âÃÜÊ±Éú³Ésk*C1
 {
-    big** RandomPolyParam = (big**)malloc((n * n) * sizeof(big));
-    big** aij = (big**)malloc((n * n) * sizeof(big));
+    big** RandomPolyParam = (big**)malloc((n) * sizeof(big*));
+    for (int i = 0; i < n; i++)
+    {
+        RandomPolyParam[i] = (big*)malloc(n * sizeof(big));
+    }
+    big** aij = (big**)malloc((n) * sizeof(big*));
+    for (int i = 0; i < n; i++)
+    {
+        aij[i] = (big*)malloc(n * sizeof(big));
+    }
     big* SecretShare = (big*)malloc(n * sizeof(big));
     big sk = mirvar(0);
     epoint* pk = epoint_init();
-    printf("ç§˜å¯†å…±äº«åˆå§‹åŒ–å®Œæ¯•ï¼Œæ­£åœ¨ç”Ÿæˆå…¬ç§é’¥ï¼š\n");
-    /************************************************ç”Ÿæˆnä¸ªt-1æ¬¡éšæœºå¤šé¡¹å¼**********************************************************/
-    printf("æ­£åœ¨ç”Ÿæˆéšæœºå¤šé¡¹å¼ï¼š\n\n");
+    printf("ÃØÃÜ¹²Ïí³õÊ¼»¯Íê±Ï£¬ÕıÔÚÉú³É¹«Ë½Ô¿£º\n");
+    /************************************************Éú³Én¸öt-1´ÎËæ»ú¶àÏîÊ½**********************************************************/
+    printf("ÕıÔÚÉú³ÉËæ»ú¶àÏîÊ½£º\n\n");
     for (int i = 0; i < n; i++)
     {
-        RandomPolyParam[i] = GenPolyParam(t);
+        RandomPolyParam[i] = GenPolyParam(t);//²»¿ÉÒÔÊÍ·Å
     }
     
-    printf("éšæœºå¤šé¡¹å¼ç”ŸæˆæˆåŠŸï¼š\n\n");
-    /***************************************é€šè¿‡ç”Ÿæˆçš„nä¸ªt-1æ¬¡å¤šé¡¹å¼ï¼Œè®¡ç®—å¯¹åº”çš„Ui***************************************************/
-    printf("æ­£åœ¨è®¡ç®—å¤šé¡¹å¼å€¼ï¼š\n\n");
+    printf("Ëæ»ú¶àÏîÊ½Éú³É³É¹¦£º\n\n");
+    /***************************************Í¨¹ıÉú³ÉµÄn¸öt-1´Î¶àÏîÊ½£¬¼ÆËã¶ÔÓ¦µÄUi***************************************************/
+    printf("ÕıÔÚ¼ÆËã¶àÏîÊ½Öµ£º\n\n");
     for (int i = 0; i < n; i++)
     {
         aij[i] = CalFij(n, t, RandomPolyParam[i]);
     }
-    printf("è®¡ç®—æˆåŠŸï¼š\n\n");
-    /***************************************é€šè¿‡è®¡ç®—å‡ºçš„Uiï¼Œæ¨¡æ‹Ÿé€šè¿‡æ˜Ÿå½¢æ‹“æ‰‘å‘é€è‡³æ¯ä¸€ä¸ªå‚ä¸è€…ï¼Œè®¡ç®—Secret Share*********************/
-    printf("æ­£åœ¨è®¡ç®—ç§˜å¯†åˆ†äº«å€¼ï¼š\n\n");
+    printf("¼ÆËã³É¹¦£º\n\n");
+    /***************************************Í¨¹ı¼ÆËã³öµÄUi£¬Ä£ÄâÍ¨¹ıĞÇĞÎÍØÆË·¢ËÍÖÁÃ¿Ò»¸ö²ÎÓëÕß£¬¼ÆËãSecret Share*********************/
+    printf("ÕıÔÚ¼ÆËãÃØÃÜ·ÖÏíÖµ£º\n\n");
     SecretShare = CalSecretShareGiven(n, t, aij);
-    printf("ç§˜å¯†åˆ†äº«å€¼è®¡ç®—å®Œæ¯•ï¼š\n\n");
-    /***************************************é€šè¿‡Secret Shareï¼Œè®¡ç®—sk*G,å³pkè€Œä¸æ³„éœ²sk************************************************/
-    printf("ç”ŸæˆPKä¸­ï¼š\n\n");
+    printf("ÃØÃÜ·ÖÏíÖµ¼ÆËãÍê±Ï£º\n\n");
+    /***************************************Í¨¹ıSecret Share£¬¼ÆËãsk*G,¼´pk¶ø²»Ğ¹Â¶sk************************************************/
+    printf("Éú³ÉPKÖĞ£º\n\n");
     pk = SecretSharePk(SecretShare, q, t, G);
-    printf("ç”Ÿæˆå®Œæ¯•ï¼š\n\n");
+    printf("Éú³ÉÍê±Ï£º\n\n");
     epoint_copy(pk, PkOut);
+    /***************************************ÊÍ·ÅÄÚ´æ************************************************/
+    for (int i = 0; i < n; i++)
+    {
+        free(RandomPolyParam[i]);
+        free(aij[i]);
+    }
+    free(RandomPolyParam);
+    free(aij);
+    mirkill(sk);
+    epoint_free(pk);
     return SecretShare;
 }
 big GenSkBySecretShare(int t,big *SecretShare,big q)
@@ -579,3 +624,4 @@ big GenSkBySecretShare(int t,big *SecretShare,big q)
     sk = SecretShareSk(SecretShare, t, q);
     return sk;
 }
+#endif // !SM2_H
