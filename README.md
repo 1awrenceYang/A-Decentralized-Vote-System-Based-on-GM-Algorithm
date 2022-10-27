@@ -4,7 +4,7 @@
 
 ## Who are we?
 
-We are currently junior college students of ShanDong University of China, we are now attending the The 7th National Cryptography Contest as a team. The team members are: XiangZhengZhao(team leader), WengLiWang, HaoYangZhang. The team is named: Find a Girlfriend with XZgg :) since our team leader XiangZhengZhao is looking for his girlfriend.
+We are currently junior college students of XX(Removed due to contest's request) University of China, we are now attending the The 7th National Cryptography Contest as a team. The team members are: (Removed due to contest's request). The team is named:(Removed due to contest's request) :) since our team leader (Removed due to contest's request) is looking for his girlfriend.
 
 
 
@@ -18,11 +18,11 @@ This is our entries to attend The 7th National Cryptography Contest. The project
 
 Email:
 
-HaoYangZhang:haoyangzhang2002@outlook.com
+(Removed due to contest's request)
 
-WenLiWang:202000460010@mail.sdu.edu.cn
+(Removed due to contest's request)
 
-XiangZhengZhao:202000460090@mail.sdu.edu.cn
+(Removed due to contest's request)
 
 
 
