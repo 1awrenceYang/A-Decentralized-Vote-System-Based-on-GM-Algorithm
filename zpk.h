@@ -1,3 +1,5 @@
+#ifndef zpk_H
+#define zpk_H
 extern "C"
 {
 #include<stdio.h>
@@ -5,6 +7,7 @@ extern "C"
 #include<time.h>
 }
 #include<iostream>
+#include"SM2.h"
 #include"SM2_Param.h"
 
 #include<time.h>
@@ -14,7 +17,7 @@ using namespace std;
 class Verifier {
 public:
 	big challenge;
-	epoint* ViryLeft,*ViryRight;
+	epoint* ViryLeft, * ViryRight;
 
 public:
 	void init()
@@ -23,20 +26,36 @@ public:
 		ViryRight = epoint_init();
 		ViryLeft = epoint_init();
 	}
-	
+
 	void VerifierGenChallenge()
 	{
 		bigbits(256, challenge);
 		cout << "Verifier send challenge to Prover" << endl;
 	}
 
-	void VerifierVerify(big response, epoint* G, epoint* mG, epoint* A1, epoint*A2) { //mG涓篊2涓殑[m]G
-		ecurve_mult(response, G, ViryLeft);  //楠岃瘉绛夊紡鐨勫乏杈逛负[response]G
-		 
+	void VerifierVerify(big response, epoint* G, epoint* mG, epoint* A1, epoint* A2) { //mG为C2中的[vote_m]G
+		//检查G是不是无穷远点
+		try {
+			bool Gvalid = CheckCurvePointInfinite(G);
+		}
+		catch (int error)
+		{
+			PrintErrorMessage(error);
+		}
+		//检查mG是不是无穷远点
+		try {
+			bool mGvalid = CheckCurvePointInfinite(mG);
+		}
+		catch (int error)
+		{
+			PrintErrorMessage(error);
+		}
+		ecurve_mult(response, G, ViryLeft);  //验证等式的左边为[response]G
+
 		ecurve_mult(challenge, mG, ViryRight);
 		ecurve_add(A1, A2);
-		ecurve_add(A2, ViryRight);  //楠岃瘉绛夊紡鐨勫彸杈逛负 A1+A2+[challenge]mG
-		
+		ecurve_add(A2, ViryRight);  //验证等式的右边为 A1+A2+[challenge]mG
+
 		if (epoint_comp(ViryLeft, ViryRight)) {
 			cout << "Vote is validated" << endl;
 		}
@@ -48,14 +67,15 @@ public:
 };
 
 class Prover {
-	big a1, a2, m1, m2, challenge1, challenge2, response1, response2, 
-		challenge2_mult_m2, neg_challenge2_mult_m2, neg_challenge2, 
+	int vote_m;
+	big a1, a2, m1, m2, challenge1, challenge2, response1, response2,
+		challenge2_mult_m2, neg_challenge2_mult_m2, neg_challenge2,
 		neg_response1, neg_challenge1, challenge1_mult_m1;
 public:
 	epoint* A1, * A2;
 	big response;
 public:
-	void init(int m)
+	void init()
 	{
 		a1 = mirvar(0);
 		a2 = mirvar(0);
@@ -76,17 +96,25 @@ public:
 		A1 = epoint_init();
 		A2 = epoint_init();
 
-		convert(m, m1);
-		convert((1 - m), m2);  //m2=1-m
+		convert(vote_m, m1);
+		convert((1 - vote_m), m2);  //m2=1-vote_m
 
 	}
-	void ProverGenA1A2(epoint* G )
+	void ProverGenA1A2(epoint* G)
 	{
-		bigbits(256, a1);  //鐢熸垚闅忔満鏁癮1
+		//检查G是不是无穷远点
+		try {
+			bool Gvalid = CheckCurvePointInfinite(G);
+		}
+		catch (int error)
+		{
+			PrintErrorMessage(error);
+		}
+		bigbits(256, a1);  //生成随机数a1
 		ecurve_mult(a1, G, A1);  //A1=[a1]G
 
-		bigbits(128, challenge2);  //鎻愬墠鐢熸垚challenge2
-		bigbits(128, response2);  //鎻愯捣鐢熸垚response2锛屽弽鎺ㄥ嚭a2
+		bigbits(128, challenge2);  //提前生成challenge2
+		bigbits(128, response2);  //提起生成response2，反推出a2
 		multiply(challenge2, m2, challenge2_mult_m2);  //challenge2_mult_m2 = challenge2 * m2
 		negify(challenge2_mult_m2, neg_challenge2_mult_m2);
 		add(response2, neg_challenge2_mult_m2, a2);  //a2 = response2 - challenge2 * m2
@@ -94,8 +122,16 @@ public:
 
 		cout << "Prover send A1,A2 to Verifier" << endl;
 	}
-	void ProverGenResponse(int m, big challenge, epoint* G)
-	{	
+	void ProverGenResponse(big challenge, epoint* G)
+	{
+		//检查G是不是无穷远点
+		try {
+			bool Gvalid = CheckCurvePointInfinite(G);
+		}
+		catch (int error)
+		{
+			PrintErrorMessage(error);
+		}
 		negify(challenge2, neg_challenge2);
 		add(challenge, neg_challenge2, challenge1);  //challenge1 = challenge -challenge2
 		multiply(challenge1, m1, challenge1_mult_m1);
@@ -104,7 +140,6 @@ public:
 
 		cout << "Prover send reponse to Verifier" << endl;
 	}
+
 };
-
-
-
+#endif

@@ -1,22 +1,3 @@
-#include "QDebugDemo.h"
-#include<QtWidgets/QApplication>
-extern"C"
-{
-#include"miracl.h"
-}
-int main(int argc, char *argv[])
-{
-    miracl* mip = mirsys(36, MAXBASE);
-    time_t seed;
-    time(&seed);
-    irand((unsigned long long)seed);
-    mip->IOBASE = 16;
-    QApplication a(argc, argv);
-    QDebugDemo w;
-    w.show();
-    return a.exec();
-}
-
 //#include "zpk.h"
 //#include "voter.h"
 //#include"SM2.h"
@@ -36,7 +17,7 @@ int main(int argc, char *argv[])
 //	int t, Mlength;
 //	int* VoteResult;
 //	int Number = 5;
-//	char* VoteMessage;
+//	char *VoteMessage;
 //	int* VoteMessageInt;
 //	point HomoC1, HomoC2, PK, G, * SigPk, AccC1, AccC2, C1, C2, HomoC1Acc, HomoC2Acc;
 //	uint32_t* AccC3, * C3;
@@ -77,7 +58,7 @@ int main(int argc, char *argv[])
 //	AccC1 = epoint_init();
 //	AccC2 = epoint_init();
 //	AccC3 = (uint32_t*)malloc(8 * sizeof(uint32_t));
-//
+//	
 //	SecretShare = (big*)malloc(Number * sizeof(big));
 //	VoteMessage = (char*)malloc(Number * sizeof(char));
 //	VoteMessageInt = (int*)malloc(Number * sizeof(int));
@@ -115,7 +96,7 @@ int main(int argc, char *argv[])
 //		copy(k, SigSK[i]);
 //		ecurve_mult(k, G, SigPk[i]);
 //	}
-//
+//	
 //	/*****************************秘密共享生成公钥，秘密份额****************************/
 //	SecretShare = GenPkbySecretShare(Number, t, G, PK, q);
 //	SkByShare = GenSkBySecretShare(t, SecretShare, q);
@@ -125,7 +106,7 @@ int main(int argc, char *argv[])
 //		cotnum(SecretShare[i], stdout);*/
 //
 //
-//		/******************************Voter初始化******************************************/
+//	/******************************Voter初始化******************************************/
 //	for (int i = 0; i < Number; i++)
 //	{
 //		Voter[i].init(VoteMessage[i], PK, G, i);
@@ -176,17 +157,16 @@ int main(int argc, char *argv[])
 //		{
 //			PrintErrorMessage(error);
 //		}
-//
+//			
 //	}
 //	/******************************环签名******************************************/
 //
 //	big KL = mirvar(0);
 //	KL = SM2RingSigGen(G, SigPk, SigSK[2], SigBL, Sigai, M[2], Number, 2, Mlength, Lhash);
 //	SM2RingSigProof(G, SigPk, SigBL, Sigai, M[2], Number, 2, Mlength, KL);
-//
+//	
 //	/******************************开票******************************************/
-//
+//	
 //	HomoDecryption(AccC1, AccC2, G, SkByShare, VoteResult);
 //	printf("\n%d ", *VoteResult);
 //}
-

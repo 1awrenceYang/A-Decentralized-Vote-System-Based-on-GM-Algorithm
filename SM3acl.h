@@ -24,7 +24,7 @@ void PrintSM3(uint32_t* sm3)
 	}
 	printf("\n");
 }
-unsigned long long padding(uint8_t* input, uint8_t*Out,unsigned long long length)//lengthµ¥Î»ÊÇ±ÈÌØ,ÊäÈëÊÇÒÔuint8_tÊı×éµÄĞÎÊ½£¬Êä³öpaddingºÃµÄuint8_tÊı×é
+unsigned long long padding(uint8_t* input, uint8_t* Out, unsigned long long length)//lengthµ¥Î»ÊÇ±ÈÌØ,ÊäÈëÊÇÒÔuint8_tÊı×éµÄĞÎÊ½£¬Êä³öpaddingºÃµÄuint8_tÊı×é
 {
 	int k = 1;
 	int total_length = (length / 512 + 1) * 512;//Ìî³äºó±ÈÌØ³¤¶È
@@ -59,17 +59,17 @@ unsigned long long padding(uint8_t* input, uint8_t*Out,unsigned long long length
 		c++;
 		length = length / 2;
 	}
-	for (int i = 0; i < 64; i=i+8)
+	for (int i = 0; i < 64; i = i + 8)
 	{
 		value = 128 * bin[i] + 64 * bin[i + 1] + 32 * bin[i + 2] + 16 * bin[i + 3] + 8 * bin[i + 4] + 4 * bin[i + 5] + 2 * bin[i + 6] + bin[i + 7];
 		output[total_byte_length - 8 + (i / 8)] = value;
 	}
 	for (int i = 0; i < total_byte_length; i++)
-		Out[i] = output[i]; 
+		Out[i] = output[i];
 	free(output);
 	return total_length;
 }
-void PrintW(uint32_t** W, int BlockNum,int choice)
+void PrintW(uint32_t** W, int BlockNum, int choice)
 {
 	if (choice == FlagForW)
 	{
@@ -89,7 +89,7 @@ void PrintW(uint32_t** W, int BlockNum,int choice)
 	}
 	else if (choice == FlagForW1)
 	{
-		
+
 		for (int i = 0; i < BlockNum; i++)
 		{
 			printf("W' for Block %d:\n", i);
@@ -105,7 +105,7 @@ void PrintW(uint32_t** W, int BlockNum,int choice)
 		}
 	}
 }
-uint32_t ** AllocW(int length,int choice)//ÊäÈëÏûÏ¢¿éÊıÁ¿ºÍÑ¡Ôñ×Ó£¬·µ»ØW»òW1µÄ·ÖÅäºÃµÄÄÚ´æ
+uint32_t** AllocW(int length, int choice)//ÊäÈëÏûÏ¢¿éÊıÁ¿ºÍÑ¡Ôñ×Ó£¬·µ»ØW»òW1µÄ·ÖÅäºÃµÄÄÚ´æ
 {
 	uint32_t** W = (uint32_t**)malloc(length * sizeof(uint32_t**));
 	if (choice == FlagForW)
@@ -149,7 +149,7 @@ void MessageExtension(uint8_t* B, uint32_t** OutW, uint32_t** OutW_1, unsigned l
 	//------------------------------------------³õÊ¼W1-W16¸³Öµ-----------------------------------------------
 	for (int i = 0; i < BlockNum; i++)
 	{
-		for (int j = 0; j < 64; j=j+4)
+		for (int j = 0; j < 64; j = j + 4)
 		{
 			W[i][j / 4] = MERAGE4(B[i * 64 + j], B[i * 64 + j + 1], B[i * 64 + j + 2], B[i * 64 + j + 3]);
 		}
@@ -212,7 +212,7 @@ uint32_t GetTj(int j)
 		return Tj1663;
 	}
 }
-uint32_t GetFFj(uint32_t A, uint32_t B, uint32_t C,int j)
+uint32_t GetFFj(uint32_t A, uint32_t B, uint32_t C, int j)
 {
 	if (j <= 15)
 	{
@@ -234,7 +234,7 @@ uint32_t GetGGj(uint32_t A, uint32_t B, uint32_t C, int j)
 		return GGj1663(A, B, C);
 	}
 }
-void CompressFunction(uint32_t* Vi,uint32_t*W,uint32_t* W_1,uint32_t *Vi1)
+void CompressFunction(uint32_t* Vi, uint32_t* W, uint32_t* W_1, uint32_t* Vi1)
 {
 	uint32_t SS1, SS2, TT1, TT2;//ÖĞ¼ä±äÁ¿
 	uint32_t A, B, C, D, E, F, G, H;//×Ö¼Ä´æÆ÷
@@ -267,7 +267,7 @@ void CompressFunction(uint32_t* Vi,uint32_t*W,uint32_t* W_1,uint32_t *Vi1)
 		G = round_shift_left(F, 19);
 		F = E;
 		E = P0(TT2);
-		
+
 	}
 	//("%02d      %08X %08X %08X %08X %08X %08X %08X %08X\n", 62, A, B, C, D, E, F, G, H);
 	Vi1[0] = A ^ Vi[0];
@@ -278,9 +278,9 @@ void CompressFunction(uint32_t* Vi,uint32_t*W,uint32_t* W_1,uint32_t *Vi1)
 	Vi1[5] = F ^ Vi[5];
 	Vi1[6] = G ^ Vi[6];
 	Vi1[7] = H ^ Vi[7];
-	
+
 }
-void SM3(uint8_t* InputMessage, uint32_t*SM3Result,unsigned long long Length)//ÊäÈëhashÊı¾İ£¬ÒÔ¼°Êı¾İµÄbit³¤¶È
+void SM3(uint8_t* InputMessage, uint32_t* SM3Result, unsigned long long Length)//ÊäÈëhashÊı¾İ£¬ÒÔ¼°Êı¾İµÄbit³¤¶È
 {
 	//-----------------------------------------------ÏûÏ¢Ìî³ä½×¶Î-------------------------------------------------------
 	int total_length = (Length / 512 + 1) * 512;//Ìî³äºó±ÈÌØ³¤¶È
@@ -304,7 +304,7 @@ void SM3(uint8_t* InputMessage, uint32_t*SM3Result,unsigned long long Length)//Ê
 
 	//---------------------------------------------Ñ¹Ëõº¯Êı½×¶Î------------------------------------------------------------
 	uint32_t* Vi1 = (uint32_t*)malloc(8 * sizeof(uint32_t));
-	uint32_t *Vi = (uint32_t*)malloc(8 * sizeof(uint32_t));
+	uint32_t* Vi = (uint32_t*)malloc(8 * sizeof(uint32_t));
 	for (int i = 0; i < 8; i++)
 	{
 		Vi1[i] = 0;
@@ -332,7 +332,7 @@ void SM3(uint8_t* InputMessage, uint32_t*SM3Result,unsigned long long Length)//Ê
 
 	for (int i = 0; i < 8; i++)//½á¹û·µ»Ø
 		SM3Result[i] = Vi[i];
-	
+
 }
 
 
